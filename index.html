@@ -1,172 +1,141 @@
-<title>AI Voice Agent</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI Voice Agent | Dual-Mode Voice AI System</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%233B82F6'/%3E%3Cstop offset='100%25' stop-color='%23A855F7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23050510'/%3E%3Cpath d='M22 14a6 6 0 0 1 6 6v12a6 6 0 0 1-12 0V20a6 6 0 0 1 6-6z' fill='url(%23g)' opacity='.9'/%3E%3Cpath d='M32 32v2a10 10 0 0 1-20 0v-2' stroke='url(%23g)' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cline x1='22' y1='44' x2='22' y2='48' stroke='url(%23g)' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M44 22c0-2.2 1.8-4 4-4s4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2' stroke='%23A855F7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M38 42v4a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-4' stroke='%23A855F7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M38 42a14 14 0 0 1-3-4' stroke='%23A855F7' stroke-width='2' fill='none' stroke-linecap='round' opacity='.5'/%3E%3Ccircle cx='48' cy='40' r='2' fill='%23A855F7' opacity='.6'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap">
 <style>
 :root {
-  --bg: #09090B;
-  --bg-alt: #18181B;
-  --bg-card: #1C1C20;
-  --fg: #FAFAFA;
-  --fg-muted: #A1A1AA;
-  --fg-dim: #71717A;
-  --accent: #10B981;
+  --bg: #050510;
+  --bg-alt: #0a0a1a;
+  --bg-card: rgba(12,12,30,0.8);
+  --fg: #f0f0ff;
+  --fg-muted: #9898b8;
+  --fg-dim: #5a5a7a;
+  --accent: #10b981;
   --accent-glow: rgba(16,185,129,0.3);
-  --inbound: #3B82F6;
-  --inbound-glow: rgba(59,130,246,0.25);
-  --outbound: #A855F7;
-  --outbound-glow: rgba(168,85,247,0.25);
-  --border: rgba(255,255,255,0.08);
-  --glass: rgba(255,255,255,0.04);
+  --inbound: #3b82f6;
+  --inbound-glow: rgba(59,130,246,0.3);
+  --outbound: #a855f7;
+  --outbound-glow: rgba(168,85,247,0.3);
+  --border: rgba(255,255,255,0.06);
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #FAFAF9;
-    --bg-alt: #F4F4F5;
-    --bg-card: #FFFFFF;
-    --fg: #18181B;
-    --fg-muted: #52525B;
-    --fg-dim: #A1A1AA;
-    --accent: #059669;
-    --accent-glow: rgba(5,150,105,0.15);
-    --inbound: #2563EB;
-    --inbound-glow: rgba(37,99,235,0.12);
-    --outbound: #9333EA;
-    --outbound-glow: rgba(147,51,234,0.12);
-    --border: rgba(0,0,0,0.08);
-    --glass: rgba(0,0,0,0.03);
-    color-scheme: light;
-  }
-}
-:root[data-theme="light"] {
-  --bg: #FAFAF9;
-  --bg-alt: #F4F4F5;
-  --bg-card: #FFFFFF;
-  --fg: #18181B;
-  --fg-muted: #52525B;
-  --fg-dim: #A1A1AA;
-  --accent: #059669;
-  --accent-glow: rgba(5,150,105,0.15);
-  --inbound: #2563EB;
-  --inbound-glow: rgba(37,99,235,0.12);
-  --outbound: #9333EA;
-  --outbound-glow: rgba(147,51,234,0.12);
-  --border: rgba(0,0,0,0.08);
-  --glass: rgba(0,0,0,0.03);
-  color-scheme: light;
-}
-
-*{box-sizing:border-box;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{
   background:var(--bg);color:var(--fg);font-family:var(--font-body);
-  line-height:1.6;-webkit-font-smoothing:antialiased;
-  padding-left:max(16px,env(safe-area-inset-left,0px));
-  padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:0;overflow-x:hidden;
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
-.wrap{max-width:1080px;margin:0 auto}
 
-/* Animated BG */
-.hero-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;animation:float 8s ease-in-out infinite}
-.orb-1{width:500px;height:500px;background:var(--inbound);top:-10%;left:-10%;animation-delay:0s}
-.orb-2{width:400px;height:400px;background:var(--outbound);top:20%;right:-5%;animation-delay:-3s}
-.orb-3{width:350px;height:350px;background:var(--accent);bottom:-5%;left:30%;animation-delay:-5s}
-@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,15px) scale(.95)}}
-@media(prefers-reduced-motion:reduce){.orb{animation:none}}
+/* ===== STARFIELD ===== */
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* Nav */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;position:relative;z-index:10}
-.nav-brand{font-family:var(--font-display);font-weight:700;font-size:1.125rem;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:8px}
-.nav-brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent-glow);animation:pulse-dot 2s ease-in-out infinite}
-@keyframes pulse-dot{0%,100%{box-shadow:0 0 8px var(--accent-glow)}50%{box-shadow:0 0 20px var(--accent-glow),0 0 40px var(--accent-glow)}}
-.nav-links{display:flex;gap:24px;list-style:none;padding:0}
-.nav-links a{color:var(--fg-muted);text-decoration:none;font-size:.875rem;font-weight:500;transition:color .2s}
+/* Gradient mesh */
+.mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.mesh-orb{position:absolute;border-radius:50%;filter:blur(140px);animation:orbFloat 14s ease-in-out infinite}
+.orb1{width:700px;height:700px;background:radial-gradient(circle,rgba(59,130,246,.18),transparent 70%);top:-20%;left:-12%;animation-delay:0s}
+.orb2{width:550px;height:550px;background:radial-gradient(circle,rgba(168,85,247,.15),transparent 70%);top:30%;right:-10%;animation-delay:-5s}
+.orb3{width:500px;height:500px;background:radial-gradient(circle,rgba(16,185,129,.12),transparent 70%);bottom:-15%;left:20%;animation-delay:-9s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-35px) scale(1.06)}66%{transform:translate(-25px,25px) scale(.94)}}
+@media(prefers-reduced-motion:reduce){.mesh-orb{animation:none}#starfield{display:none}.reveal{opacity:1!important;transform:none!important}}
+
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px));position:relative;z-index:2}
+
+/* ===== NAV ===== */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.nav-brand{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--inbound),var(--outbound));display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--inbound-glow)}
+.nav-links{display:flex;gap:24px;list-style:none}
+.nav-links a{color:var(--fg-muted);text-decoration:none;font-size:.875rem;font-weight:500;transition:color .25s}
 .nav-links a:hover{color:var(--fg)}
 
-/* Hero */
-.hero{padding:100px 0 60px;text-align:center;position:relative}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border);padding:8px 18px;border-radius:999px;font-size:.8125rem;font-weight:600;color:var(--accent);margin-bottom:28px;letter-spacing:.03em}
-.hero h1{font-family:var(--font-display);font-size:clamp(2.25rem,6vw,3.75rem);font-weight:800;line-height:1.1;margin-bottom:20px;text-wrap:balance}
-.hero .grad{background:linear-gradient(135deg,var(--inbound),var(--outbound),var(--accent));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s ease infinite}
-@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.hero p{color:var(--fg-muted);font-size:1.0625rem;max-width:620px;margin:0 auto 40px;line-height:1.7}
+/* ===== HERO ===== */
+.hero{padding:100px 0 80px;text-align:center;position:relative;perspective:1200px}
 
-/* Stats with counter animation */
-.stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin-bottom:48px}
-.stat{text-align:center}
-.stat-val{font-family:var(--font-display);font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--inbound));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-variant-numeric:tabular-nums}
-.stat-lbl{font-size:.75rem;color:var(--fg-dim);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(16px);border:1px solid var(--border);padding:8px 22px;border-radius:999px;font-size:.8rem;font-weight:600;color:var(--accent);margin-bottom:28px;letter-spacing:.04em}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent-glow);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--accent-glow)}50%{box-shadow:0 0 24px var(--accent-glow),0 0 48px var(--accent-glow)}}
 
-/* === DEMO WIDGETS === The most important section */
-.demo-section{padding:80px 0}
-.demo-section .section-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;text-align:center}
-.demo-section h2{font-family:var(--font-display);font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;text-align:center;margin-bottom:8px;text-wrap:balance}
-.demo-section .sub{color:var(--fg-muted);text-align:center;max-width:560px;margin:0 auto 48px;font-size:.9375rem}
+.hero h1{font-family:var(--font-display);font-size:clamp(2.4rem,6.5vw,4.2rem);font-weight:800;line-height:1.08;margin-bottom:20px;text-wrap:balance}
+.grad-text{background:linear-gradient(135deg,var(--inbound) 0%,var(--outbound) 45%,var(--accent) 85%,var(--inbound) 100%);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradShift 6s ease infinite}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 
-.demo-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:28px}
+.hero-sub{color:var(--fg-muted);font-size:1.05rem;max-width:620px;margin:0 auto 44px;line-height:1.75}
+
+/* Stats */
+.stats{display:flex;justify-content:center;gap:20px;flex-wrap:wrap}
+.stat{text-align:center;padding:16px 22px;background:rgba(255,255,255,.03);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:16px;min-width:130px;transition:transform .3s,box-shadow .3s}
+.stat:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.stat-val{font-family:var(--font-display);font-size:1.7rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--inbound));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:.7rem;color:var(--fg-dim);margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+
+/* ===== SECTION LABELS ===== */
+.sh-label{font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.sh-title{font-family:var(--font-display);font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;margin-bottom:8px;text-wrap:balance}
+.sh-desc{color:var(--fg-muted);max-width:560px;margin-bottom:44px;font-size:.94rem}
+
+/* ===== DEMO CARDS ===== */
+.demo-section{padding:90px 0}
+.demo-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:28px;perspective:1200px}
+
 .demo-card{
-  background:var(--bg-card);border:1px solid var(--border);border-radius:20px;
-  padding:0;overflow:hidden;position:relative;
-  transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1);
+  background:var(--bg-card);backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:22px;
+  overflow:hidden;position:relative;
+  transition:transform .5s cubic-bezier(.22,1,.36,1),box-shadow .5s;
+  transform-style:preserve-3d;will-change:transform;
 }
-.demo-card:hover{transform:translateY(-6px)}
-.demo-card.inbound:hover{box-shadow:0 20px 60px -12px var(--inbound-glow),0 0 0 1px var(--inbound)}
-.demo-card.outbound:hover{box-shadow:0 20px 60px -12px var(--outbound-glow),0 0 0 1px var(--outbound)}
+.demo-card::before{content:'';position:absolute;inset:0;border-radius:22px;padding:1px;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.demo-card.inbound:hover{box-shadow:0 30px 80px -20px var(--inbound-glow),0 0 0 1px rgba(59,130,246,.3)}
+.demo-card.outbound:hover{box-shadow:0 30px 80px -20px var(--outbound-glow),0 0 0 1px rgba(168,85,247,.3)}
 
-/* Card glow top bar */
-.card-glow{height:3px;width:100%}
-.inbound .card-glow{background:linear-gradient(90deg,transparent,var(--inbound),transparent)}
-.outbound .card-glow{background:linear-gradient(90deg,transparent,var(--outbound),transparent)}
+.card-stripe{height:3px;position:relative;overflow:hidden}
+.inbound .card-stripe{background:linear-gradient(90deg,transparent,var(--inbound),var(--outbound),transparent)}
+.outbound .card-stripe{background:linear-gradient(90deg,transparent,var(--outbound),var(--accent),transparent)}
+.card-stripe::after{content:'';position:absolute;inset:0;background:inherit;filter:blur(6px);opacity:.5}
 
-.card-body{padding:32px 28px 28px}
-.card-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
-.card-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center}
-.inbound .card-icon{background:var(--inbound-glow);color:var(--inbound)}
-.outbound .card-icon{background:var(--outbound-glow);color:var(--outbound)}
-.card-head .titles h3{font-family:var(--font-display);font-size:1.25rem;font-weight:700}
-.card-head .titles .agent{font-size:.8125rem;color:var(--fg-muted)}
+.card-body{padding:32px 26px 26px}
+.card-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.card-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;position:relative}
+.card-icon::before{content:'';position:absolute;inset:0;border-radius:14px;opacity:.12}
+.inbound .card-icon{color:var(--inbound)}.inbound .card-icon::before{background:var(--inbound)}
+.outbound .card-icon{color:var(--outbound)}.outbound .card-icon::before{background:var(--outbound)}
+.card-head h3{font-family:var(--font-display);font-size:1.2rem;font-weight:700}
+.card-head .agent-name{font-size:.8rem;color:var(--fg-muted)}
 
-.platform-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;font-size:.75rem;font-weight:700;margin-bottom:16px}
-.inbound .platform-tag{background:var(--inbound-glow);color:var(--inbound)}
-.outbound .platform-tag{background:var(--outbound-glow);color:var(--outbound)}
+.platform-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:8px;font-size:.75rem;font-weight:700;margin-bottom:14px}
+.inbound .platform-tag{background:rgba(59,130,246,.1);color:var(--inbound);border:1px solid rgba(59,130,246,.12)}
+.outbound .platform-tag{background:rgba(168,85,247,.1);color:var(--outbound);border:1px solid rgba(168,85,247,.12)}
 
-.card-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-.spec{padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px}
-.spec .spec-label{font-size:.6875rem;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.spec .spec-value{font-size:.8125rem;font-weight:600}
+.card-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.spec{padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px}
+.spec-label{font-size:.68rem;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.spec-value{font-size:.8rem;font-weight:600}
 
-.card-desc{font-size:.8125rem;color:var(--fg-muted);line-height:1.6;margin-bottom:24px;padding:14px 16px;background:var(--glass);border-radius:10px;border:1px solid var(--border)}
+.card-desc{font-size:.8rem;color:var(--fg-muted);line-height:1.65;margin-bottom:20px;padding:12px 14px;background:rgba(255,255,255,.02);border-radius:10px;border:1px solid var(--border)}
 .card-desc strong{color:var(--fg);font-weight:600}
 
-/* === DEMO BUTTONS === */
+/* Demo buttons */
 .demo-btn{
   width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:16px 24px;border-radius:14px;border:none;cursor:pointer;
-  font-family:var(--font-display);font-size:1rem;font-weight:700;
-  transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;
+  padding:15px 22px;border-radius:14px;border:none;cursor:pointer;
+  font-family:var(--font-display);font-size:.95rem;font-weight:700;color:#fff;
+  transition:all .35s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;
 }
-.demo-btn::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
-.demo-btn:hover::before{opacity:1}
+.demo-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 50%);opacity:0;transition:opacity .3s}
+.demo-btn:hover::after{opacity:1}
 .demo-btn:active{transform:scale(.97)}
 
-.demo-btn.inbound-btn{
-  background:var(--inbound);color:#fff;
-  box-shadow:0 4px 20px var(--inbound-glow),inset 0 1px 0 rgba(255,255,255,.15);
-}
-.demo-btn.inbound-btn::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent)}
-.demo-btn.inbound-btn:hover{box-shadow:0 8px 30px var(--inbound-glow),0 0 60px var(--inbound-glow);transform:translateY(-2px)}
+.inbound-btn{background:linear-gradient(135deg,var(--inbound),#1d4ed8);box-shadow:0 4px 24px var(--inbound-glow),inset 0 1px 0 rgba(255,255,255,.15)}
+.inbound-btn:hover{box-shadow:0 8px 40px var(--inbound-glow),0 0 60px var(--inbound-glow);transform:translateY(-2px)}
+.outbound-btn{background:linear-gradient(135deg,var(--outbound),#7c3aed);box-shadow:0 4px 24px var(--outbound-glow),inset 0 1px 0 rgba(255,255,255,.15)}
+.outbound-btn:hover{box-shadow:0 8px 40px var(--outbound-glow),0 0 60px var(--outbound-glow);transform:translateY(-2px)}
 
-.demo-btn.outbound-btn{
-  background:var(--outbound);color:#fff;
-  box-shadow:0 4px 20px var(--outbound-glow),inset 0 1px 0 rgba(255,255,255,.15);
-}
-.demo-btn.outbound-btn::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent)}
-.demo-btn.outbound-btn:hover{box-shadow:0 8px 30px var(--outbound-glow),0 0 60px var(--outbound-glow);transform:translateY(-2px)}
-
-/* Mic animation on button */
 .mic-wave{display:inline-flex;align-items:center;gap:3px;height:18px}
 .mic-wave span{display:block;width:3px;background:#fff;border-radius:2px;animation:wave 1s ease-in-out infinite}
 .mic-wave span:nth-child(1){height:8px;animation-delay:0s}
@@ -174,153 +143,185 @@ body{
 .mic-wave span:nth-child(3){height:10px;animation-delay:.3s}
 .mic-wave span:nth-child(4){height:16px;animation-delay:.45s}
 .mic-wave span:nth-child(5){height:8px;animation-delay:.6s}
-@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.4)}}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.35)}}
 
-/* Phone ring animation */
-.phone-ring{display:inline-block;animation:ring 1.5s ease-in-out infinite}
-@keyframes ring{0%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-14deg)}30%{transform:rotate(10deg)}40%{transform:rotate(-8deg)}50%{transform:rotate(4deg)}60%,100%{transform:rotate(0)}}
+.phone-ring{display:inline-block;animation:ring 2s ease-in-out infinite}
+@keyframes ring{0%,60%,100%{transform:rotate(0)}5%{transform:rotate(14deg)}10%{transform:rotate(-14deg)}15%{transform:rotate(10deg)}20%{transform:rotate(-8deg)}25%{transform:rotate(4deg)}}
 
-.demo-note{font-size:.6875rem;color:var(--fg-dim);text-align:center;margin-top:10px}
+.demo-note{font-size:.7rem;color:var(--fg-dim);text-align:center;margin-top:8px}
 
-/* Demo modal overlay */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.active{display:flex}
-.modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:440px;width:100%;position:relative;animation:modalIn .3s ease}
-@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--fg-muted);cursor:pointer;font-size:1.25rem;padding:4px}
-.modal-close:hover{color:var(--fg)}
-.modal-box h3{font-family:var(--font-display);font-size:1.375rem;font-weight:700;margin-bottom:8px}
-.modal-box p{color:var(--fg-muted);font-size:.875rem;margin-bottom:24px;line-height:1.6}
-.modal-box input{width:100%;padding:12px 16px;background:var(--bg-alt);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-family:var(--font-body);font-size:.875rem;margin-bottom:12px;outline:none;transition:border-color .2s}
-.modal-box input:focus{border-color:var(--outbound)}
-.modal-box input::placeholder{color:var(--fg-dim)}
-.modal-submit{width:100%;padding:14px;border-radius:12px;border:none;background:var(--outbound);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.9375rem;cursor:pointer;margin-top:8px;transition:all .2s}
-.modal-submit:hover{box-shadow:0 8px 30px var(--outbound-glow)}
-.modal-info{margin-top:16px;padding:12px 14px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:.75rem;color:var(--fg-dim);line-height:1.5}
+/* ===== WORKFLOW SECTION ===== */
+.workflow-section{padding:90px 0}
+.workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:32px}
 
-/* Architecture */
-.arch-section{padding:80px 0}
-.arch-container{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;overflow:hidden}
-.arch-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
-.arch-title-row h3{font-family:var(--font-display);font-size:1.125rem;font-weight:700}
+.workflow-card{
+  background:var(--bg-card);backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:22px;
+  padding:32px 24px;position:relative;overflow:hidden;
+}
+.workflow-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+.workflow-card.wf-inbound::before{background:linear-gradient(90deg,transparent,rgba(59,130,246,.4),transparent)}
+.workflow-card.wf-outbound::before{background:linear-gradient(90deg,transparent,rgba(168,85,247,.4),transparent)}
 
-/* Proper scrollable flow */
-.flow-scroll{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
-.flow-scroll::-webkit-scrollbar{height:4px}
-.flow-scroll::-webkit-scrollbar-track{background:var(--bg-alt);border-radius:4px}
-.flow-scroll::-webkit-scrollbar-thumb{background:var(--fg-dim);border-radius:4px}
+.wf-header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.wf-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.wf-inbound .wf-icon{background:rgba(59,130,246,.12);color:var(--inbound)}
+.wf-outbound .wf-icon{background:rgba(168,85,247,.12);color:var(--outbound)}
+.wf-header h3{font-family:var(--font-display);font-size:1.05rem;font-weight:700}
+.wf-header .wf-sub{font-size:.75rem;color:var(--fg-muted)}
 
-.flow-pipeline{display:flex;align-items:center;gap:0;min-width:max-content;padding:12px 4px}
+/* Flow nodes */
+.flow-vertical{position:relative;padding-left:28px}
+.flow-line{position:absolute;left:13px;top:18px;bottom:18px;width:2px;border-radius:1px}
+.wf-inbound .flow-line{background:linear-gradient(180deg,var(--inbound),rgba(59,130,246,.15))}
+.wf-outbound .flow-line{background:linear-gradient(180deg,var(--outbound),rgba(168,85,247,.15))}
+
+/* Animated dots on flow line */
+.flow-dot{position:absolute;left:10px;width:8px;height:8px;border-radius:50%;animation:flowDown 3s linear infinite;opacity:0}
+.wf-inbound .flow-dot{background:var(--inbound);box-shadow:0 0 8px var(--inbound-glow)}
+.wf-outbound .flow-dot{background:var(--outbound);box-shadow:0 0 8px var(--outbound-glow)}
+.flow-dot:nth-child(2){animation-delay:-1s}
+.flow-dot:nth-child(3){animation-delay:-2s}
+@keyframes flowDown{0%{top:16px;opacity:0}10%{opacity:.8}90%{opacity:.8}100%{top:calc(100% - 16px);opacity:0}}
+
 .flow-node{
-  padding:12px 18px;border-radius:12px;font-size:.75rem;font-weight:700;
-  text-align:center;white-space:nowrap;flex-shrink:0;
-  border:1px solid var(--border);position:relative;
-  transition:transform .2s,box-shadow .2s;
+  position:relative;display:flex;align-items:center;gap:12px;
+  padding:10px 14px;margin-bottom:10px;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;
+  font-size:.78rem;font-weight:600;
+  transition:transform .25s,box-shadow .25s,background .25s;
 }
-.flow-node:hover{transform:translateY(-2px)}
-.flow-node.n-trigger{background:linear-gradient(135deg,var(--accent-glow),transparent);color:var(--accent);border-color:var(--accent)}
-.flow-node.n-process{background:var(--glass);color:var(--fg)}
-.flow-node.n-api{background:linear-gradient(135deg,var(--outbound-glow),transparent);color:var(--outbound);border-color:var(--outbound)}
-.flow-node.n-decision{background:linear-gradient(135deg,var(--inbound-glow),transparent);color:var(--inbound);border-color:var(--inbound);clip-path:polygon(12% 0%,88% 0%,100% 50%,88% 100%,12% 100%,0% 50%);padding:12px 28px;border:none}
-.flow-arrow{color:var(--fg-dim);font-size:.875rem;flex-shrink:0;padding:0 4px;display:flex;align-items:center}
-.flow-arrow svg{width:20px;height:20px}
+.flow-node:hover{transform:translateX(4px);background:rgba(255,255,255,.04);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.flow-node::before{
+  content:'';position:absolute;left:-20px;top:50%;
+  width:10px;height:10px;border-radius:50%;border:2px solid;transform:translateY(-50%);
+  background:var(--bg);
+}
+.wf-inbound .flow-node::before{border-color:var(--inbound)}
+.wf-outbound .flow-node::before{border-color:var(--outbound)}
+.flow-node .node-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wf-inbound .node-icon{background:rgba(59,130,246,.1);color:var(--inbound)}
+.wf-outbound .node-icon{background:rgba(168,85,247,.1);color:var(--outbound)}
+.flow-node .node-text{line-height:1.3}
+.flow-node .node-label{font-size:.68rem;color:var(--fg-dim);font-weight:500}
 
-/* Branches */
-.branches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
-.branch{
-  padding:20px 16px;border-radius:14px;text-align:center;
-  border:1px solid var(--border);transition:transform .2s,box-shadow .2s;
-}
-.branch:hover{transform:translateY(-3px)}
-.branch-icon{font-size:1.5rem;margin-bottom:8px}
-.branch-name{font-family:var(--font-display);font-weight:700;font-size:.875rem;margin-bottom:6px}
-.branch-actions{font-size:.75rem;color:var(--fg-muted);line-height:1.5}
-.branch.b-interested{background:linear-gradient(180deg,rgba(16,185,129,.12),transparent);border-color:rgba(16,185,129,.25)}
-.branch.b-interested:hover{box-shadow:0 8px 30px rgba(16,185,129,.15)}
-.branch.b-not{background:var(--glass)}
-.branch.b-noanswer{background:linear-gradient(180deg,var(--inbound-glow),transparent);border-color:rgba(59,130,246,.2)}
-.branch.b-dead{background:linear-gradient(180deg,rgba(239,68,68,.1),transparent);border-color:rgba(239,68,68,.2)}
+/* Outcome branches */
+.branches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
+.branch{padding:18px 14px;border-radius:16px;text-align:center;border:1px solid var(--border);transition:transform .3s,box-shadow .3s;backdrop-filter:blur(8px)}
+.branch:hover{transform:translateY(-4px)}
+.branch-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+.branch-name{font-family:var(--font-display);font-weight:700;font-size:.82rem;margin-bottom:4px}
+.branch-actions{font-size:.72rem;color:var(--fg-muted);line-height:1.5}
+.b-interested{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.15)}
+.b-interested:hover{box-shadow:0 12px 40px rgba(16,185,129,.12)}
+.b-interested .branch-icon{background:rgba(16,185,129,.12);color:var(--accent)}
+.b-not{background:rgba(255,255,255,.02)}
+.b-not .branch-icon{background:rgba(239,68,68,.1);color:#ef4444}
+.b-noanswer{background:rgba(59,130,246,.05);border-color:rgba(59,130,246,.1)}
+.b-noanswer .branch-icon{background:rgba(59,130,246,.1);color:var(--inbound)}
+.b-dead{background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.08)}
+.b-dead .branch-icon{background:rgba(239,68,68,.08);color:#ef4444}
+
+/* Unified callout */
+.unified-callout{margin-top:32px;padding:26px 28px;border-radius:20px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(168,85,247,.06));border:1px solid rgba(168,85,247,.12);position:relative;overflow:hidden}
+.unified-callout::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(168,85,247,.4),rgba(59,130,246,.4),transparent)}
+.unified-callout h4{font-family:var(--font-display);font-weight:700;margin-bottom:8px;font-size:1rem}
+.unified-callout p{font-size:.85rem;color:var(--fg-muted);line-height:1.7}
+.unified-callout strong{color:var(--fg)}
 
 /* Production callout */
-.callout{margin-top:32px;padding:24px 28px;border-radius:14px;background:linear-gradient(135deg,var(--accent-glow),transparent);border:1px solid rgba(16,185,129,.2)}
-.callout h4{font-family:var(--font-display);font-weight:700;margin-bottom:6px}
-.callout p{font-size:.875rem;color:var(--fg-muted);line-height:1.7}
-.callout strong{color:var(--fg)}
+.prod-callout{margin-top:16px;padding:26px 28px;border-radius:20px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.12);position:relative;overflow:hidden}
+.prod-callout::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(16,185,129,.5),transparent)}
+.prod-callout h4{font-family:var(--font-display);font-weight:700;margin-bottom:6px;font-size:.95rem}
+.prod-callout p{font-size:.85rem;color:var(--fg-muted);line-height:1.7}
+.prod-callout strong{color:var(--fg)}
 
-/* Security */
-.security-section{padding:60px 0}
-.sec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
-.sec-item{display:flex;gap:14px;padding:22px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;transition:transform .2s}
-.sec-item:hover{transform:translateY(-2px)}
-.sec-icon{width:40px;height:40px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent)}
-.sec-item h4{font-size:.875rem;font-weight:700;margin-bottom:3px}
-.sec-item p{font-size:.8125rem;color:var(--fg-muted);line-height:1.5}
+/* ===== SECURITY ===== */
+.security-section{padding:80px 0}
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
+.sec-item{display:flex;gap:14px;padding:22px;background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:18px;transition:transform .3s,box-shadow .3s}
+.sec-item:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.sec-icon{width:42px;height:42px;border-radius:12px;background:rgba(16,185,129,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent)}
+.sec-item h4{font-size:.85rem;font-weight:700;margin-bottom:3px}
+.sec-item p{font-size:.8rem;color:var(--fg-muted);line-height:1.5}
 
-/* Tech stack */
-.stack-section{padding:60px 0}
-.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
-.stack-item{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;transition:transform .2s}
-.stack-item:hover{transform:translateY(-2px)}
-.stack-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.stack-name{font-weight:700;font-size:.875rem}
-.stack-role{font-size:.75rem;color:var(--fg-muted)}
+/* ===== TECH STACK ===== */
+.stack-section{padding:80px 0}
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:12px}
+.stack-item{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;transition:transform .3s,box-shadow .3s}
+.stack-item:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.stack-dot{width:10px;height:10px;border-radius:4px;flex-shrink:0}
+.stack-name{font-weight:700;font-size:.85rem}
+.stack-role{font-size:.72rem;color:var(--fg-muted)}
 
-/* CTA */
-.cta{text-align:center;padding:80px 0}
-.cta h2{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:12px}
-.cta p{color:var(--fg-muted);max-width:480px;margin:0 auto 28px;font-size:.9375rem}
-.cta-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--accent);color:#fff;padding:14px 32px;border-radius:12px;
-  text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:.9375rem;
-  box-shadow:0 4px 20px var(--accent-glow);transition:all .3s;
-}
-.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--accent-glow),0 0 60px var(--accent-glow)}
-
-/* Footer */
-.footer{border-top:1px solid var(--border);padding:32px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.footer-left{font-size:.8125rem;color:var(--fg-muted)}
-.footer-links{display:flex;gap:20px;list-style:none;padding:0}
-.footer-links a{color:var(--fg-muted);text-decoration:none;font-size:.8125rem;transition:color .2s}
+/* ===== FOOTER ===== */
+.footer{border-top:1px solid var(--border);padding:28px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-top:40px}
+.footer-left{font-size:.8rem;color:var(--fg-muted)}
+.footer-links{display:flex;gap:18px;list-style:none}
+.footer-links a{color:var(--fg-muted);text-decoration:none;font-size:.8rem;transition:color .2s}
 .footer-links a:hover{color:var(--fg)}
 
-/* Scroll animations */
+/* ===== MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--bg-alt);border:1px solid var(--border);border-radius:22px;padding:36px;max-width:420px;width:100%;position:relative;animation:modalIn .35s cubic-bezier(.22,1,.36,1);backdrop-filter:blur(20px)}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--fg-muted);cursor:pointer;font-size:1.2rem;padding:4px;transition:color .2s}
+.modal-close:hover{color:var(--fg)}
+.modal-box h3{font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:8px}
+.modal-box .modal-desc{color:var(--fg-muted);font-size:.875rem;margin-bottom:20px;line-height:1.6}
+.modal-submit{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--outbound),#7c3aed);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.94rem;cursor:pointer;transition:all .3s;box-shadow:0 4px 20px var(--outbound-glow)}
+.modal-submit:hover{box-shadow:0 8px 40px var(--outbound-glow);transform:translateY(-1px)}
+.modal-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.modal-info{margin-top:16px;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;font-size:.75rem;color:var(--fg-dim);line-height:1.5}
+.modal-steps{list-style:none;margin:16px 0;display:flex;flex-direction:column;gap:10px}
+.modal-steps li{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:var(--fg-muted)}
+.modal-steps .step-num{width:24px;height:24px;border-radius:8px;background:rgba(168,85,247,.12);color:var(--outbound);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+
+/* ===== SCROLL REVEAL ===== */
 .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
 .reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-delay-1{transition-delay:.1s}
-.reveal-delay-2{transition-delay:.2s}
+.reveal-d1{transition-delay:.1s}.reveal-d2{transition-delay:.2s}.reveal-d3{transition-delay:.3s}
 
-/* Section headers */
-.sh-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-.sh-title{font-family:var(--font-display);font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;margin-bottom:8px;text-wrap:balance}
-.sh-desc{color:var(--fg-muted);max-width:560px;margin-bottom:40px;font-size:.9375rem}
-
-/* Responsive */
-@media(max-width:640px){
-  .hero{padding:60px 0 40px}
-  .stats{gap:24px}
-  .nav-links{gap:14px}
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .workflow-grid{grid-template-columns:1fr}
   .branches{grid-template-columns:repeat(2,1fr)}
-  .card-specs{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .hero{padding:70px 0 50px}
+  .stats{gap:10px}
+  .stat{min-width:0;flex:1 1 calc(50% - 5px);padding:12px 14px}
+  .stat-val{font-size:1.3rem}
+  .nav-links{gap:12px}
+  .nav-links a{font-size:.8rem}
+  .branches{grid-template-columns:1fr 1fr}
   .footer{flex-direction:column;text-align:center}
-  .arch-title-row{flex-direction:column;align-items:flex-start}
-  .orb{opacity:.2}
+  .card-specs{grid-template-columns:1fr}
 }
 </style>
+</head>
+<body>
 
-<!-- Animated BG -->
-<div class="hero-bg">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
+<canvas id="starfield"></canvas>
+<div class="mesh">
+  <div class="mesh-orb orb1"></div>
+  <div class="mesh-orb orb2"></div>
+  <div class="mesh-orb orb3"></div>
 </div>
 
 <div class="wrap">
+
   <!-- Nav -->
   <nav class="nav">
-    <a href="#" class="nav-brand"><span class="dot"></span> AI Voice Agent</a>
+    <a href="#" class="nav-brand">
+      <div class="nav-logo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+      </div>
+      AI Voice Agent
+    </a>
     <ul class="nav-links">
-      <li><a href="#demos">Try Demo</a></li>
+      <li><a href="#demos">Demos</a></li>
       <li><a href="#architecture">Architecture</a></li>
       <li><a href="#stack">Stack</a></li>
       <li><a href="https://github.com/utkarshkapoor95/ai-voice-agent" target="_blank">GitHub</a></li>
@@ -329,68 +330,58 @@ body{
 
   <!-- Hero -->
   <header class="hero">
-    <div class="hero-badge">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-      Portfolio Project
+    <div class="hero-badge reveal">
+      <span class="pulse-dot"></span>
+      Portfolio Project &middot; Live Demo
     </div>
-    <h1>Dual-Mode <span class="grad">Voice AI</span> System</h1>
-    <p>An inbound clinic receptionist and an outbound lead qualification campaign, powered by two voice AI platforms, unified by n8n workflow automation with intelligent branching and a Telegram approval gate.</p>
+    <h1 class="reveal">Dual-Mode<br><span class="grad-text">Voice AI System</span></h1>
+    <p class="hero-sub reveal">An inbound clinic receptionist and outbound lead qualifier, two voice AI platforms unified by n8n workflow automation with intent classification and a Telegram approval gate.</p>
 
     <div class="stats">
-      <div class="stat">
-        <div class="stat-val" data-target="2">0</div>
-        <div class="stat-lbl">Voice AI Platforms</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val" data-target="5000" data-suffix="+">0</div>
-        <div class="stat-lbl">Production Calls Made</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val" data-target="8" data-prefix="~" data-suffix="%">0</div>
-        <div class="stat-lbl">Positive Response Rate</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val" data-target="4">0</div>
-        <div class="stat-lbl">Outcome Branches</div>
-      </div>
+      <div class="stat reveal"><div class="stat-val" data-target="2">0</div><div class="stat-lbl">AI Platforms</div></div>
+      <div class="stat reveal reveal-d1"><div class="stat-val" data-target="5000" data-suffix="+">0</div><div class="stat-lbl">Production Calls</div></div>
+      <div class="stat reveal reveal-d2"><div class="stat-val" data-target="8" data-prefix="~" data-suffix="%">0</div><div class="stat-lbl">Response Rate</div></div>
+      <div class="stat reveal reveal-d3"><div class="stat-val" data-target="4">0</div><div class="stat-lbl">Outcome Branches</div></div>
     </div>
   </header>
 
-  <!-- DEMO SECTION with interactive widgets -->
+  <!-- DEMO SECTION -->
   <section id="demos" class="demo-section">
-    <div class="sh-label reveal">Try It Live</div>
-    <h2 class="sh-title reveal">Two Agents, Two Platforms, One System</h2>
-    <p class="sub reveal">Click either demo to experience the AI voice agents firsthand. Each runs on a different platform.</p>
+    <div class="reveal" style="text-align:center">
+      <div class="sh-label">Try It Live</div>
+      <h2 class="sh-title">Two Agents, Two Platforms, One System</h2>
+      <p class="sh-desc" style="margin-left:auto;margin-right:auto">Click either demo to experience the AI voice agents firsthand. Each runs on a different platform with distinct capabilities.</p>
+    </div>
 
     <div class="demo-cards">
-      <!-- Inbound Card -->
+      <!-- Inbound -->
       <div class="demo-card inbound reveal">
-        <div class="card-glow"></div>
+        <div class="card-stripe"></div>
         <div class="card-body">
           <div class="card-head">
             <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </div>
-            <div class="titles">
+            <div>
               <h3>Inbound Receptionist</h3>
-              <div class="agent">Priya at SkinGlow Clinic</div>
+              <div class="agent-name">Priya &middot; SkinGlow Clinic</div>
             </div>
           </div>
 
           <div class="platform-tag">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            Vapi.ai  (Browser Voice)
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Vapi.ai &middot; Browser Voice
           </div>
 
           <div class="card-specs">
             <div class="spec"><div class="spec-label">Channel</div><div class="spec-value">WebRTC</div></div>
-            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs</div></div>
-            <div class="spec"><div class="spec-label">LLM</div><div class="spec-value">GPT-4o</div></div>
-            <div class="spec"><div class="spec-label">Cost</div><div class="spec-value">~$0.05/min</div></div>
+            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs Multilingual</div></div>
+            <div class="spec"><div class="spec-label">LLM</div><div class="spec-value">GPT-4.1</div></div>
+            <div class="spec"><div class="spec-label">Languages</div><div class="spec-value">Hindi + English</div></div>
           </div>
 
           <div class="card-desc">
-            <strong>Talk to Priya:</strong> Ask about acne treatment, hair care, pigmentation, skin allergies, pediatric skin conditions, or nail infections. Try booking an appointment!
+            <strong>Talk to Priya:</strong> Ask about acne treatment, hair care, pigmentation, skin allergies, pediatric skin conditions, or nail infections. Try booking an appointment.
           </div>
 
           <button class="demo-btn inbound-btn" onclick="startInboundDemo()">
@@ -401,29 +392,29 @@ body{
         </div>
       </div>
 
-      <!-- Outbound Card -->
-      <div class="demo-card outbound reveal reveal-delay-1">
-        <div class="card-glow"></div>
+      <!-- Outbound -->
+      <div class="demo-card outbound reveal reveal-d1">
+        <div class="card-stripe"></div>
         <div class="card-body">
           <div class="card-head">
             <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </div>
-            <div class="titles">
+            <div>
               <h3>Outbound Lead Qualifier</h3>
-              <div class="agent">Maya at AutoScale Solutions</div>
+              <div class="agent-name">Maya &middot; AutoScale Solutions</div>
             </div>
           </div>
 
           <div class="platform-tag">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            Bolna.ai  (Phone Call)
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Bolna.ai &middot; Phone Call
           </div>
 
           <div class="card-specs">
             <div class="spec"><div class="spec-label">Channel</div><div class="spec-value">Telephony</div></div>
-            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs</div></div>
-            <div class="spec"><div class="spec-label">Classification</div><div class="spec-value">Groq LLama 3.3</div></div>
+            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs Multilingual</div></div>
+            <div class="spec"><div class="spec-label">Classification</div><div class="spec-value">Groq LLaMA 3.3</div></div>
             <div class="spec"><div class="spec-label">Cost</div><div class="spec-value">~$0.06/min</div></div>
           </div>
 
@@ -433,78 +424,148 @@ body{
 
           <button class="demo-btn outbound-btn" onclick="openOutboundModal()">
             <span class="phone-ring">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </span>
-            Request a Call from Maya
+            Request Demo Call
           </button>
-          <div class="demo-note">Triggers an actual AI phone call. Owner approval required via Telegram.</div>
+          <div class="demo-note">Triggers a real AI phone call. Owner approval required via Telegram.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Architecture -->
-  <section id="architecture" class="arch-section">
-    <div class="sh-label reveal">Architecture</div>
-    <h2 class="sh-title reveal">Outbound Campaign Flow</h2>
-    <p class="sh-desc reveal">Each lead goes through a 10-node n8n workflow with retry logic, Groq intent classification, and four distinct outcome branches.</p>
+  <!-- ARCHITECTURE / WORKFLOW SECTION -->
+  <section id="architecture" class="workflow-section">
+    <div class="reveal" style="text-align:center">
+      <div class="sh-label">Architecture</div>
+      <h2 class="sh-title">How Each Agent Works</h2>
+      <p class="sh-desc" style="margin-left:auto;margin-right:auto">Two distinct pipelines, each optimized for its channel. Data flows through n8n with Groq intent classification and automated follow-ups.</p>
+    </div>
 
-    <div class="arch-container reveal">
-      <div class="arch-title-row">
-        <h3>Node-by-Node Pipeline</h3>
-        <span style="font-size:.75rem;color:var(--fg-dim)">Scroll to see full flow &rarr;</span>
-      </div>
+    <div class="workflow-grid">
+      <!-- Inbound Workflow -->
+      <div class="workflow-card wf-inbound reveal">
+        <div class="wf-header">
+          <div class="wf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          </div>
+          <div>
+            <h3>Inbound Pipeline</h3>
+            <div class="wf-sub">Vapi.ai &rarr; n8n &rarr; Google Sheets</div>
+          </div>
+        </div>
+        <div class="flow-vertical">
+          <div class="flow-line"></div>
+          <div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div>
 
-      <div class="flow-scroll">
-        <div class="flow-pipeline">
-          <div class="flow-node n-trigger">Schedule<br>Trigger</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-process">Get Leads<br>from Sheet</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-process">Loop Over<br>Each Lead</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-process">Clean Phone<br>E.164</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-api">Bolna API<br>Place Call</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-process">Wait<br>120s</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-api">Bolna API<br>Get Status</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-decision">Picked<br>Up?</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-api">Groq LLM<br>Classify</div>
-          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="flow-node n-decision">Intent?</div>
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/></svg></div>
+            <div class="node-text">Visitor clicks Talk to Priya<div class="node-label">WebRTC browser call</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="node-text">Vapi AI handles conversation<div class="node-label">GPT-4.1 + ElevenLabs voice</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="node-text">Call ends, webhook fires<div class="node-label">Transcript + metadata to n8n</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <div class="node-text">Log to Google Sheets<div class="node-label">Inbound Calls tab</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
+            <div class="node-text">Telegram notification<div class="node-label">Alert owner with call summary</div></div>
+          </div>
         </div>
       </div>
 
-      <!-- Four outcome branches -->
+      <!-- Outbound Workflow -->
+      <div class="workflow-card wf-outbound reveal reveal-d1">
+        <div class="wf-header">
+          <div class="wf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+          </div>
+          <div>
+            <h3>Outbound Pipeline</h3>
+            <div class="wf-sub">n8n &rarr; Bolna.ai &rarr; Groq &rarr; Brevo</div>
+          </div>
+        </div>
+        <div class="flow-vertical">
+          <div class="flow-line"></div>
+          <div class="flow-dot"></div><div class="flow-dot"></div><div class="flow-dot"></div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <div class="node-text">Pull leads from Google Sheets<div class="node-label">Scheduled trigger or webhook</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/><path d="M4.11 2h3a2 2 0 0 1 2 1.72"/></svg></div>
+            <div class="node-text">Bolna API places call<div class="node-label">Maya qualifies the lead</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="node-text">Wait 120s, fetch status<div class="node-label">Check if call was answered</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="node-text">Groq LLaMA 3.3 classifies intent<div class="node-label">Interested / Not Interested</div></div>
+          </div>
+
+          <div class="flow-node">
+            <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg></div>
+            <div class="node-text">Branch to 4 outcomes<div class="node-label">Brevo email + Sheet update + Telegram</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outcome branches for outbound -->
+    <div class="reveal">
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="sh-label">Outbound Outcomes</div>
+        <h3 style="font-family:var(--font-display);font-weight:700;font-size:1.1rem">Four-Branch Follow-Up Logic</h3>
+      </div>
       <div class="branches">
         <div class="branch b-interested">
-          <div class="branch-icon">&#9989;</div>
+          <div class="branch-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
           <div class="branch-name">Interested</div>
           <div class="branch-actions">Opportunity email<br>Sheet: Mark Interested<br>Telegram alert to owner</div>
         </div>
         <div class="branch b-not">
-          <div class="branch-icon">&#10060;</div>
+          <div class="branch-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
           <div class="branch-name">Not Interested</div>
           <div class="branch-actions">Reassurance email<br>Sheet: Mark Not Interested</div>
         </div>
         <div class="branch b-noanswer">
-          <div class="branch-icon">&#128222;</div>
+          <div class="branch-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/><path d="M15.05 4.17A2 2 0 0 1 17 6v2"/><line x1="1" y1="1" x2="23" y2="23"/></svg></div>
           <div class="branch-name">No Answer</div>
           <div class="branch-actions">"We tried calling" email<br>Retry in 3 days</div>
         </div>
         <div class="branch b-dead">
-          <div class="branch-icon">&#128128;</div>
+          <div class="branch-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
           <div class="branch-name">Dead Contact</div>
           <div class="branch-actions">"Door is open" email<br>No more retries</div>
         </div>
       </div>
     </div>
 
-    <div class="callout reveal">
+    <!-- Unified callout -->
+    <div class="unified-callout reveal">
+      <h4>One System, Two Channels, Fully Customizable</h4>
+      <p>Both agents share the same n8n backbone. A single business can deploy <strong>inbound reception</strong> for customer calls and <strong>outbound qualification</strong> for lead generation simultaneously, with shared Google Sheets tracking, unified Telegram alerts, and coordinated Brevo email sequences. The architecture is modular: swap the LLM, change the voice, add new branches, or connect a CRM, all without touching the agents themselves.</p>
+    </div>
+
+    <!-- Production callout -->
+    <div class="prod-callout reveal">
       <h4>Based on Production Infrastructure</h4>
       <p>The outbound workflow architecture is adapted from a production system that made <strong>5,000+ outbound calls</strong> with an <strong>~8% positive response rate</strong> (~400 qualified leads) during a real client engagement. The production system ran daily scheduled campaigns with Airtable as the data store.</p>
     </div>
@@ -512,46 +573,33 @@ body{
 
   <!-- Security -->
   <section class="security-section">
-    <div class="sh-label reveal">Security</div>
-    <h2 class="sh-title reveal">Telegram Approval Gate</h2>
-    <p class="sh-desc reveal">Both demos are gated to prevent unauthorized API credit usage.</p>
-
+    <div class="reveal" style="text-align:center">
+      <div class="sh-label">Security</div>
+      <h2 class="sh-title">Telegram Approval Gate</h2>
+      <p class="sh-desc" style="margin-left:auto;margin-right:auto">Both demos are gated to prevent unauthorized API credit usage.</p>
+    </div>
     <div class="sec-grid">
       <div class="sec-item reveal">
-        <div class="sec-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
-        <div>
-          <h4>Owner-Only Activation</h4>
-          <p>Every demo trigger sends a Telegram message. Calls proceed only after explicit approval.</p>
-        </div>
+        <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div><h4>Owner-Only Activation</h4><p>Every demo trigger sends a Telegram message. Calls proceed only after explicit approval.</p></div>
       </div>
-      <div class="sec-item reveal reveal-delay-1">
-        <div class="sec-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        <div>
-          <h4>Credit Protection</h4>
-          <p>No anonymous visitor can burn Vapi or Bolna credits. The gate blocks all unauthorized calls.</p>
-        </div>
+      <div class="sec-item reveal reveal-d1">
+        <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div><h4>Credit Protection</h4><p>No anonymous visitor can burn Vapi or Bolna credits. The gate blocks all unauthorized calls.</p></div>
       </div>
-      <div class="sec-item reveal reveal-delay-2">
-        <div class="sec-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        </div>
-        <div>
-          <h4>Sanitized Workflows</h4>
-          <p>All API keys, agent IDs, and client details are stripped from public workflow files.</p>
-        </div>
+      <div class="sec-item reveal reveal-d2">
+        <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+        <div><h4>Sanitized Workflows</h4><p>All API keys, agent IDs, and client details are stripped from public workflow files.</p></div>
       </div>
     </div>
   </section>
 
   <!-- Tech Stack -->
   <section id="stack" class="stack-section">
-    <div class="sh-label reveal">Tech Stack</div>
-    <h2 class="sh-title reveal">Built With</h2>
-
+    <div class="reveal" style="text-align:center">
+      <div class="sh-label">Tech Stack</div>
+      <h2 class="sh-title">Built With</h2>
+    </div>
     <div class="stack-grid">
       <div class="stack-item reveal"><div class="stack-dot" style="background:var(--inbound)"></div><div><div class="stack-name">Vapi.ai</div><div class="stack-role">Inbound voice (WebRTC)</div></div></div>
       <div class="stack-item reveal"><div class="stack-dot" style="background:var(--outbound)"></div><div><div class="stack-name">Bolna.ai</div><div class="stack-role">Outbound telephony</div></div></div>
@@ -564,159 +612,153 @@ body{
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="cta">
-    <h2 class="reveal">Want to See It Live?</h2>
-    <p class="reveal">Try the inbound demo above, or book a walkthrough where I run the full outbound campaign in real time.</p>
-    <a href="https://calendly.com/utkarshkapoor1995" target="_blank" class="cta-btn reveal">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Book a Walkthrough
-    </a>
-  </section>
-
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-left">Built by Utkarsh Kapoor &middot; AI Automation & Data Systems</div>
     <ul class="footer-links">
-      <li><a href="https://utkarshkapoor.com" target="_blank">Portfolio</a></li>
+      <li><a href="https://autothynk.com" target="_blank">Autothynk</a></li>
       <li><a href="https://github.com/utkarshkapoor95" target="_blank">GitHub</a></li>
     </ul>
   </footer>
+
 </div>
 
-<!-- Outbound Demo Modal -->
+<!-- Outbound Modal -->
 <div class="modal-overlay" id="outboundModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeOutboundModal()">&times;</button>
-    <h3><span class="phone-ring" style="display:inline-block;margin-right:6px">&#128222;</span> Request a Call from Maya</h3>
-    <p>Maya from AutoScale Solutions will call you to discuss your business and qualify your needs. This triggers a real AI phone call.</p>
-    <form id="outboundForm" onsubmit="submitOutboundDemo(event)">
-      <input type="text" name="name" placeholder="Your Name" required>
-      <input type="tel" name="phone" placeholder="Phone (+91XXXXXXXXXX)" required>
-      <input type="text" name="company" placeholder="Your Company (optional)">
-      <button type="submit" class="modal-submit">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        Place the Call
-      </button>
-    </form>
+    <h3>Request Demo Call</h3>
+    <p class="modal-desc">This triggers a real AI phone call from Maya (AutoScale Solutions). The call goes to the project owner's verified number for demonstration purposes.</p>
+
+    <ol class="modal-steps">
+      <li><span class="step-num">1</span>You click the button below</li>
+      <li><span class="step-num">2</span>A Telegram message is sent to the project owner</li>
+      <li><span class="step-num">3</span>Once approved, Maya calls the verified demo number</li>
+      <li><span class="step-num">4</span>The AI qualification conversation begins</li>
+    </ol>
+
+    <button class="modal-submit" id="outboundSubmitBtn" onclick="submitOutboundDemo()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:6px" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      Trigger Demo Call
+    </button>
+
     <div class="modal-info">
-      <strong>How it works:</strong> Your request goes to the project owner's Telegram. Once approved, Maya (AI agent) will call the number you provided. The call is recorded for demo purposes. Standard call charges may apply.
+      <strong>Note:</strong> This is a live demo with real API costs. The Telegram approval gate ensures no unauthorized calls are placed. The call will be to the project owner's verified phone number.
     </div>
   </div>
 </div>
 
 <script>
-// Counter animation
-function animateCounters() {
-  document.querySelectorAll('.stat-val').forEach(el => {
-    const target = parseInt(el.dataset.target);
-    const prefix = el.dataset.prefix || '';
-    const suffix = el.dataset.suffix || '';
-    const duration = 1500;
-    const start = performance.now();
-    function update(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.floor(eased * target);
-      el.textContent = prefix + current.toLocaleString() + suffix;
-      if (progress < 1) requestAnimationFrame(update);
+// ===== STARFIELD =====
+(function(){
+  const c=document.getElementById('starfield'),ctx=c.getContext('2d');
+  let w,h,stars=[];
+  const COUNT=200;
+  function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+  function init(){
+    resize();stars=[];
+    for(let i=0;i<COUNT;i++)stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.4+.3,speed:Math.random()*.12+.02,opacity:Math.random()*.5+.1,phase:Math.random()*Math.PI*2});
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    const t=performance.now()*.001;
+    for(const s of stars){
+      s.y-=s.speed;
+      if(s.y<-2){s.y=h+2;s.x=Math.random()*w}
+      const flicker=.5+.5*Math.sin(t*1.5+s.phase);
+      ctx.globalAlpha=s.opacity*flicker;
+      ctx.fillStyle='#fff';
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
     }
-    requestAnimationFrame(update);
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize',resize);
+  init();draw();
+})();
+
+// ===== COUNTER ANIMATION =====
+function animateCounters(){
+  document.querySelectorAll('.stat-val').forEach(el=>{
+    const target=parseInt(el.dataset.target),prefix=el.dataset.prefix||'',suffix=el.dataset.suffix||'',dur=1800,start=performance.now();
+    function tick(now){
+      const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,4);
+      el.textContent=prefix+Math.floor(e*target).toLocaleString()+suffix;
+      if(p<1)requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   });
 }
 
-// Scroll reveal
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      observer.unobserve(entry.target);
-    }
+// ===== SCROLL REVEAL =====
+const revealObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revealObs.unobserve(e.target)}});
+},{threshold:.08,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+
+// Counter trigger
+const statsObs=new IntersectionObserver(([e])=>{
+  if(e.isIntersecting){animateCounters();statsObs.disconnect()}
+},{threshold:.3});
+statsObs.observe(document.querySelector('.stats'));
+
+// ===== 3D TILT on demo cards =====
+document.querySelectorAll('.demo-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`translateY(-8px) rotateY(${x*8}deg) rotateX(${-y*8}deg)`;
   });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-// Run counters when hero is visible
-const heroObserver = new IntersectionObserver(([entry]) => {
-  if (entry.isIntersecting) { animateCounters(); heroObserver.disconnect(); }
-}, { threshold: 0.3 });
-heroObserver.observe(document.querySelector('.stats'));
-
-// ===== INBOUND DEMO (Vapi) =====
-function startInboundDemo() {
-  // Vapi Web SDK - loads the widget and starts a call
-  // Replace YOUR_VAPI_PUBLIC_KEY and YOUR_VAPI_ASSISTANT_ID with real values
-  const VAPI_PUBLIC_KEY = 'YOUR_VAPI_PUBLIC_KEY';
-  const ASSISTANT_ID = 'YOUR_VAPI_ASSISTANT_ID';
-
-  if (VAPI_PUBLIC_KEY === 'YOUR_VAPI_PUBLIC_KEY') {
-    alert('Inbound demo is being set up. The Vapi assistant ID needs to be configured. Contact Utkarsh for a live walkthrough.');
-    return;
-  }
-
-  // Dynamic script loading for Vapi
-  if (!window.vapiSDK) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.0/dist/vapi.min.js';
-    script.onload = function() {
-      const vapi = new window.Vapi(VAPI_PUBLIC_KEY);
-      vapi.start(ASSISTANT_ID);
-    };
-    document.head.appendChild(script);
-  }
-}
-
-// ===== OUTBOUND DEMO (Bolna via n8n webhook) =====
-function openOutboundModal() {
-  document.getElementById('outboundModal').classList.add('active');
-}
-function closeOutboundModal() {
-  document.getElementById('outboundModal').classList.remove('active');
-}
-// Close on backdrop click
-document.getElementById('outboundModal').addEventListener('click', function(e) {
-  if (e.target === this) closeOutboundModal();
+  card.addEventListener('mouseleave',()=>{card.style.transform=''});
 });
 
-function submitOutboundDemo(e) {
-  e.preventDefault();
-  const form = e.target;
-  const data = {
-    name: form.name.value,
-    phone: form.phone.value,
-    company: form.company.value || 'Not specified'
-  };
-
-  // Replace with your actual n8n webhook URL
-  const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL/webhook/outbound-demo';
-
-  if (WEBHOOK_URL.includes('YOUR_N8N_WEBHOOK_URL')) {
-    alert('Outbound demo is being configured. The n8n webhook URL needs to be set up. Contact Utkarsh for a live demo.');
-    closeOutboundModal();
-    return;
+// ===== INBOUND DEMO (Vapi) =====
+function startInboundDemo(){
+  const VAPI_PUBLIC_KEY='ae4504c8-112b-41d8-85b3-efc7dfc5114a';
+  const ASSISTANT_ID='50ec2d63-2c6c-426a-81e6-c92eaafc7cda';
+  if(!window.vapiSDK){
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.0/dist/vapi.min.js';
+    s.onload=function(){const v=new window.Vapi(VAPI_PUBLIC_KEY);v.start(ASSISTANT_ID)};
+    document.head.appendChild(s);
   }
+}
 
-  const btn = form.querySelector('.modal-submit');
-  btn.textContent = 'Sending request...';
-  btn.disabled = true;
+// ===== OUTBOUND DEMO (Bolna via n8n) =====
+function openOutboundModal(){document.getElementById('outboundModal').classList.add('active')}
+function closeOutboundModal(){
+  document.getElementById('outboundModal').classList.remove('active');
+  // Reset button state
+  const btn=document.getElementById('outboundSubmitBtn');
+  btn.textContent='Trigger Demo Call';btn.disabled=false;
+  btn.style.background='';
+}
+document.getElementById('outboundModal').addEventListener('click',function(e){if(e.target===this)closeOutboundModal()});
 
-  fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+function submitOutboundDemo(){
+  const WEBHOOK_URL='https://n8n.autothynk.com/webhook/outbound-demo';
+  const btn=document.getElementById('outboundSubmitBtn');
+  btn.textContent='Sending request...';btn.disabled=true;
+
+  fetch(WEBHOOK_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({source:'portfolio-demo',timestamp:new Date().toISOString()})
   })
-  .then(r => r.json())
-  .then(() => {
-    btn.textContent = 'Request sent! Check Telegram.';
-    btn.style.background = '#059669';
-    setTimeout(() => closeOutboundModal(), 2500);
+  .then(()=>{
+    btn.textContent='Request sent! Awaiting approval.';
+    btn.style.background='linear-gradient(135deg,#059669,#047857)';
+    setTimeout(closeOutboundModal,2500);
   })
-  .catch(() => {
-    btn.textContent = 'Request sent! Awaiting approval.';
-    btn.style.background = '#059669';
-    setTimeout(() => closeOutboundModal(), 2500);
+  .catch(()=>{
+    btn.textContent='Request sent! Awaiting approval.';
+    btn.style.background='linear-gradient(135deg,#059669,#047857)';
+    setTimeout(closeOutboundModal,2500);
   });
 }
 </script>
+</body>
+</html>
