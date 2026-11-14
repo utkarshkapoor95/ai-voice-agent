@@ -1,0 +1,202 @@
+{
+  "name": "AI Voice Agent - Outbound Demo (Single Lead)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "outbound-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Demo Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1200, 400],
+      "webhookId": "outbound-demo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{YOUR_TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"YOUR_TELEGRAM_CHAT_ID\",\n  \"text\": \"🔔 AI Voice Agent Demo Request\\n\\nSomeone wants to trigger the outbound demo.\\nLead: {{ $json.body.name }}\\nPhone: {{ $json.body.phone }}\\n\\nReply YES to approve or NO to block.\",\n  \"reply_markup\": {\n    \"inline_keyboard\": [[{\"text\": \"✅ Approve\", \"callback_data\": \"approve\"}, {\"text\": \"❌ Block\", \"callback_data\": \"block\"}]]\n  }\n}",
+        "options": {}
+      },
+      "id": "telegram-gate",
+      "name": "Telegram - Ask Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-960, 400],
+      "notes": "Sends approval request to owner's Telegram. The approval webhook (separate workflow) handles the response and triggers the call only if approved."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.bolna.ai/call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"agent_id\": \"YOUR_BOLNA_AGENT_ID\",\n  \"recipient_phone_number\": \"{{ $json.body.phone }}\",\n  \"user_data\": {\n    \"name\": \"{{ $json.body.name }}\",\n    \"company\": \"{{ $json.body.company }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "bolna-call",
+      "name": "Bolna - Place Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-720, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Bolna API Key"
+        }
+      },
+      "notes": "Places the outbound call via Bolna API. Phone must be in E.164 format (+91XXXXXXXXXX). For demo mode, this is the owner's verified phone number."
+    },
+    {
+      "parameters": {
+        "amount": 120,
+        "unit": "seconds"
+      },
+      "id": "wait-for-call",
+      "name": "Wait 120s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [-480, 400],
+      "notes": "Waits for the call to complete before polling Bolna for results."
+    },
+    {
+      "parameters": {
+        "url": "=https://api.bolna.ai/agent/YOUR_BOLNA_AGENT_ID/execution/{{ $('Bolna - Place Call').item.json.execution_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "bolna-status",
+      "name": "Bolna - Get Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-240, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Bolna API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "cond-transcript",
+              "leftValue": "={{ !!$json.transcript }}",
+              "rightValue": {},
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-picked-up",
+      "name": "IF - Picked Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [0, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer YOUR_GROQ_API_KEY" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an intent classifier. Analyze the following sales call transcript and respond with exactly one word: 'Interested' if the person showed interest in services or agreed to a follow-up, or 'NotInterested' if they declined or were not interested.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Transcript: {{ $json.transcript }}\"\n    }\n  ],\n  \"max_tokens\": 10,\n  \"temperature\": 0\n}",
+        "options": {}
+      },
+      "id": "groq-classify",
+      "name": "Groq - Classify Intent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 288],
+      "notes": "Sends transcript to Groq (LLama 3.3 70B) for binary intent classification."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "cond-interested",
+              "leftValue": "={{ $json.choices[0].message.content }}",
+              "rightValue": "Interested",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-interested",
+      "name": "IF - Interested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 288]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={\"status\": \"completed\", \"outcome\": \"{{ $json.choices[0].message.content }}\", \"message\": \"Demo call completed successfully\"}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-success",
+      "name": "Respond - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 288]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={\"status\": \"completed\", \"outcome\": \"no_answer\", \"message\": \"Lead did not pick up the call\"}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-no-answer",
+      "name": "Respond - No Answer",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [240, 528]
+    }
+  ],
+  "connections": {
+    "Webhook - Demo Trigger": { "main": [[{ "node": "Telegram - Ask Approval", "type": "main", "index": 0 }]] },
+    "Telegram - Ask Approval": { "main": [[{ "node": "Bolna - Place Call", "type": "main", "index": 0 }]] },
+    "Bolna - Place Call": { "main": [[{ "node": "Wait 120s", "type": "main", "index": 0 }]] },
+    "Wait 120s": { "main": [[{ "node": "Bolna - Get Status", "type": "main", "index": 0 }]] },
+    "Bolna - Get Status": { "main": [[{ "node": "IF - Picked Up?", "type": "main", "index": 0 }]] },
+    "IF - Picked Up?": { "main": [
+      [{ "node": "Groq - Classify Intent", "type": "main", "index": 0 }],
+      [{ "node": "Respond - No Answer", "type": "main", "index": 0 }]
+    ]},
+    "Groq - Classify Intent": { "main": [[{ "node": "IF - Interested?", "type": "main", "index": 0 }]] },
+    "IF - Interested?": { "main": [
+      [{ "node": "Respond - Success", "type": "main", "index": 0 }],
+      [{ "node": "Respond - Success", "type": "main", "index": 0 }]
+    ]}
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "demo"
+  }
+}

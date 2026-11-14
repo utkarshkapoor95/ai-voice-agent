@@ -1,0 +1,87 @@
+{
+  "name": "AI Voice Agent - Telegram Approval Gate",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram-callback",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "telegram-webhook",
+      "name": "Webhook - Telegram Callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 400],
+      "webhookId": "telegram-callback",
+      "notes": "Set this URL as the webhook for your Telegram bot via: https://api.telegram.org/bot<TOKEN>/setWebhook?url=<YOUR_N8N_URL>/webhook/telegram-callback"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "cond-approved",
+              "leftValue": "={{ $json.body.callback_query?.data }}",
+              "rightValue": "approve",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-approval",
+      "name": "IF - Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-360, 400],
+      "notes": "Checks if the owner clicked 'Approve' or 'Block' in Telegram."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{YOUR_TELEGRAM_BOT_TOKEN}}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"callback_query_id\": \"{{ $json.body.callback_query.id }}\",\n  \"text\": \"✅ Approved! Call will be placed shortly.\"\n}",
+        "options": {}
+      },
+      "id": "ack-approved",
+      "name": "Telegram - Acknowledge Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-120, 320],
+      "notes": "Sends a toast notification in Telegram confirming the approval."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{YOUR_TELEGRAM_BOT_TOKEN}}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"callback_query_id\": \"{{ $json.body.callback_query.id }}\",\n  \"text\": \"❌ Blocked. No call will be placed.\"\n}",
+        "options": {}
+      },
+      "id": "ack-blocked",
+      "name": "Telegram - Acknowledge Block",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-120, 480],
+      "notes": "Sends a toast notification in Telegram confirming the block."
+    }
+  ],
+  "connections": {
+    "Webhook - Telegram Callback": { "main": [[{ "node": "IF - Approved?", "type": "main", "index": 0 }]] },
+    "IF - Approved?": { "main": [
+      [{ "node": "Telegram - Acknowledge Approval", "type": "main", "index": 0 }],
+      [{ "node": "Telegram - Acknowledge Block", "type": "main", "index": 0 }]
+    ]}
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "demo"
+  }
+}

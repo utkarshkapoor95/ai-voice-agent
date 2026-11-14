@@ -1,0 +1,722 @@
+<title>AI Voice Agent</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap">
+<style>
+:root {
+  --bg: #09090B;
+  --bg-alt: #18181B;
+  --bg-card: #1C1C20;
+  --fg: #FAFAFA;
+  --fg-muted: #A1A1AA;
+  --fg-dim: #71717A;
+  --accent: #10B981;
+  --accent-glow: rgba(16,185,129,0.3);
+  --inbound: #3B82F6;
+  --inbound-glow: rgba(59,130,246,0.25);
+  --outbound: #A855F7;
+  --outbound-glow: rgba(168,85,247,0.25);
+  --border: rgba(255,255,255,0.08);
+  --glass: rgba(255,255,255,0.04);
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #FAFAF9;
+    --bg-alt: #F4F4F5;
+    --bg-card: #FFFFFF;
+    --fg: #18181B;
+    --fg-muted: #52525B;
+    --fg-dim: #A1A1AA;
+    --accent: #059669;
+    --accent-glow: rgba(5,150,105,0.15);
+    --inbound: #2563EB;
+    --inbound-glow: rgba(37,99,235,0.12);
+    --outbound: #9333EA;
+    --outbound-glow: rgba(147,51,234,0.12);
+    --border: rgba(0,0,0,0.08);
+    --glass: rgba(0,0,0,0.03);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #FAFAF9;
+  --bg-alt: #F4F4F5;
+  --bg-card: #FFFFFF;
+  --fg: #18181B;
+  --fg-muted: #52525B;
+  --fg-dim: #A1A1AA;
+  --accent: #059669;
+  --accent-glow: rgba(5,150,105,0.15);
+  --inbound: #2563EB;
+  --inbound-glow: rgba(37,99,235,0.12);
+  --outbound: #9333EA;
+  --outbound-glow: rgba(147,51,234,0.12);
+  --border: rgba(0,0,0,0.08);
+  --glass: rgba(0,0,0,0.03);
+  color-scheme: light;
+}
+
+*{box-sizing:border-box;margin:0}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--font-body);
+  line-height:1.6;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;overflow-x:hidden;
+}
+.wrap{max-width:1080px;margin:0 auto}
+
+/* Animated BG */
+.hero-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;animation:float 8s ease-in-out infinite}
+.orb-1{width:500px;height:500px;background:var(--inbound);top:-10%;left:-10%;animation-delay:0s}
+.orb-2{width:400px;height:400px;background:var(--outbound);top:20%;right:-5%;animation-delay:-3s}
+.orb-3{width:350px;height:350px;background:var(--accent);bottom:-5%;left:30%;animation-delay:-5s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,15px) scale(.95)}}
+@media(prefers-reduced-motion:reduce){.orb{animation:none}}
+
+/* Nav */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;position:relative;z-index:10}
+.nav-brand{font-family:var(--font-display);font-weight:700;font-size:1.125rem;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:8px}
+.nav-brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent-glow);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 8px var(--accent-glow)}50%{box-shadow:0 0 20px var(--accent-glow),0 0 40px var(--accent-glow)}}
+.nav-links{display:flex;gap:24px;list-style:none;padding:0}
+.nav-links a{color:var(--fg-muted);text-decoration:none;font-size:.875rem;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--fg)}
+
+/* Hero */
+.hero{padding:100px 0 60px;text-align:center;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border);padding:8px 18px;border-radius:999px;font-size:.8125rem;font-weight:600;color:var(--accent);margin-bottom:28px;letter-spacing:.03em}
+.hero h1{font-family:var(--font-display);font-size:clamp(2.25rem,6vw,3.75rem);font-weight:800;line-height:1.1;margin-bottom:20px;text-wrap:balance}
+.hero .grad{background:linear-gradient(135deg,var(--inbound),var(--outbound),var(--accent));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s ease infinite}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero p{color:var(--fg-muted);font-size:1.0625rem;max-width:620px;margin:0 auto 40px;line-height:1.7}
+
+/* Stats with counter animation */
+.stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin-bottom:48px}
+.stat{text-align:center}
+.stat-val{font-family:var(--font-display);font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--inbound));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:.75rem;color:var(--fg-dim);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+
+/* === DEMO WIDGETS === The most important section */
+.demo-section{padding:80px 0}
+.demo-section .section-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;text-align:center}
+.demo-section h2{font-family:var(--font-display);font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;text-align:center;margin-bottom:8px;text-wrap:balance}
+.demo-section .sub{color:var(--fg-muted);text-align:center;max-width:560px;margin:0 auto 48px;font-size:.9375rem}
+
+.demo-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:28px}
+.demo-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:20px;
+  padding:0;overflow:hidden;position:relative;
+  transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1);
+}
+.demo-card:hover{transform:translateY(-6px)}
+.demo-card.inbound:hover{box-shadow:0 20px 60px -12px var(--inbound-glow),0 0 0 1px var(--inbound)}
+.demo-card.outbound:hover{box-shadow:0 20px 60px -12px var(--outbound-glow),0 0 0 1px var(--outbound)}
+
+/* Card glow top bar */
+.card-glow{height:3px;width:100%}
+.inbound .card-glow{background:linear-gradient(90deg,transparent,var(--inbound),transparent)}
+.outbound .card-glow{background:linear-gradient(90deg,transparent,var(--outbound),transparent)}
+
+.card-body{padding:32px 28px 28px}
+.card-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.card-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.inbound .card-icon{background:var(--inbound-glow);color:var(--inbound)}
+.outbound .card-icon{background:var(--outbound-glow);color:var(--outbound)}
+.card-head .titles h3{font-family:var(--font-display);font-size:1.25rem;font-weight:700}
+.card-head .titles .agent{font-size:.8125rem;color:var(--fg-muted)}
+
+.platform-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;font-size:.75rem;font-weight:700;margin-bottom:16px}
+.inbound .platform-tag{background:var(--inbound-glow);color:var(--inbound)}
+.outbound .platform-tag{background:var(--outbound-glow);color:var(--outbound)}
+
+.card-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.spec{padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px}
+.spec .spec-label{font-size:.6875rem;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.spec .spec-value{font-size:.8125rem;font-weight:600}
+
+.card-desc{font-size:.8125rem;color:var(--fg-muted);line-height:1.6;margin-bottom:24px;padding:14px 16px;background:var(--glass);border-radius:10px;border:1px solid var(--border)}
+.card-desc strong{color:var(--fg);font-weight:600}
+
+/* === DEMO BUTTONS === */
+.demo-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px 24px;border-radius:14px;border:none;cursor:pointer;
+  font-family:var(--font-display);font-size:1rem;font-weight:700;
+  transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;
+}
+.demo-btn::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.demo-btn:hover::before{opacity:1}
+.demo-btn:active{transform:scale(.97)}
+
+.demo-btn.inbound-btn{
+  background:var(--inbound);color:#fff;
+  box-shadow:0 4px 20px var(--inbound-glow),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.demo-btn.inbound-btn::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent)}
+.demo-btn.inbound-btn:hover{box-shadow:0 8px 30px var(--inbound-glow),0 0 60px var(--inbound-glow);transform:translateY(-2px)}
+
+.demo-btn.outbound-btn{
+  background:var(--outbound);color:#fff;
+  box-shadow:0 4px 20px var(--outbound-glow),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.demo-btn.outbound-btn::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent)}
+.demo-btn.outbound-btn:hover{box-shadow:0 8px 30px var(--outbound-glow),0 0 60px var(--outbound-glow);transform:translateY(-2px)}
+
+/* Mic animation on button */
+.mic-wave{display:inline-flex;align-items:center;gap:3px;height:18px}
+.mic-wave span{display:block;width:3px;background:#fff;border-radius:2px;animation:wave 1s ease-in-out infinite}
+.mic-wave span:nth-child(1){height:8px;animation-delay:0s}
+.mic-wave span:nth-child(2){height:14px;animation-delay:.15s}
+.mic-wave span:nth-child(3){height:10px;animation-delay:.3s}
+.mic-wave span:nth-child(4){height:16px;animation-delay:.45s}
+.mic-wave span:nth-child(5){height:8px;animation-delay:.6s}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.4)}}
+
+/* Phone ring animation */
+.phone-ring{display:inline-block;animation:ring 1.5s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-14deg)}30%{transform:rotate(10deg)}40%{transform:rotate(-8deg)}50%{transform:rotate(4deg)}60%,100%{transform:rotate(0)}}
+
+.demo-note{font-size:.6875rem;color:var(--fg-dim);text-align:center;margin-top:10px}
+
+/* Demo modal overlay */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:440px;width:100%;position:relative;animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--fg-muted);cursor:pointer;font-size:1.25rem;padding:4px}
+.modal-close:hover{color:var(--fg)}
+.modal-box h3{font-family:var(--font-display);font-size:1.375rem;font-weight:700;margin-bottom:8px}
+.modal-box p{color:var(--fg-muted);font-size:.875rem;margin-bottom:24px;line-height:1.6}
+.modal-box input{width:100%;padding:12px 16px;background:var(--bg-alt);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-family:var(--font-body);font-size:.875rem;margin-bottom:12px;outline:none;transition:border-color .2s}
+.modal-box input:focus{border-color:var(--outbound)}
+.modal-box input::placeholder{color:var(--fg-dim)}
+.modal-submit{width:100%;padding:14px;border-radius:12px;border:none;background:var(--outbound);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.9375rem;cursor:pointer;margin-top:8px;transition:all .2s}
+.modal-submit:hover{box-shadow:0 8px 30px var(--outbound-glow)}
+.modal-info{margin-top:16px;padding:12px 14px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:.75rem;color:var(--fg-dim);line-height:1.5}
+
+/* Architecture */
+.arch-section{padding:80px 0}
+.arch-container{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;overflow:hidden}
+.arch-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.arch-title-row h3{font-family:var(--font-display);font-size:1.125rem;font-weight:700}
+
+/* Proper scrollable flow */
+.flow-scroll{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.flow-scroll::-webkit-scrollbar{height:4px}
+.flow-scroll::-webkit-scrollbar-track{background:var(--bg-alt);border-radius:4px}
+.flow-scroll::-webkit-scrollbar-thumb{background:var(--fg-dim);border-radius:4px}
+
+.flow-pipeline{display:flex;align-items:center;gap:0;min-width:max-content;padding:12px 4px}
+.flow-node{
+  padding:12px 18px;border-radius:12px;font-size:.75rem;font-weight:700;
+  text-align:center;white-space:nowrap;flex-shrink:0;
+  border:1px solid var(--border);position:relative;
+  transition:transform .2s,box-shadow .2s;
+}
+.flow-node:hover{transform:translateY(-2px)}
+.flow-node.n-trigger{background:linear-gradient(135deg,var(--accent-glow),transparent);color:var(--accent);border-color:var(--accent)}
+.flow-node.n-process{background:var(--glass);color:var(--fg)}
+.flow-node.n-api{background:linear-gradient(135deg,var(--outbound-glow),transparent);color:var(--outbound);border-color:var(--outbound)}
+.flow-node.n-decision{background:linear-gradient(135deg,var(--inbound-glow),transparent);color:var(--inbound);border-color:var(--inbound);clip-path:polygon(12% 0%,88% 0%,100% 50%,88% 100%,12% 100%,0% 50%);padding:12px 28px;border:none}
+.flow-arrow{color:var(--fg-dim);font-size:.875rem;flex-shrink:0;padding:0 4px;display:flex;align-items:center}
+.flow-arrow svg{width:20px;height:20px}
+
+/* Branches */
+.branches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
+.branch{
+  padding:20px 16px;border-radius:14px;text-align:center;
+  border:1px solid var(--border);transition:transform .2s,box-shadow .2s;
+}
+.branch:hover{transform:translateY(-3px)}
+.branch-icon{font-size:1.5rem;margin-bottom:8px}
+.branch-name{font-family:var(--font-display);font-weight:700;font-size:.875rem;margin-bottom:6px}
+.branch-actions{font-size:.75rem;color:var(--fg-muted);line-height:1.5}
+.branch.b-interested{background:linear-gradient(180deg,rgba(16,185,129,.12),transparent);border-color:rgba(16,185,129,.25)}
+.branch.b-interested:hover{box-shadow:0 8px 30px rgba(16,185,129,.15)}
+.branch.b-not{background:var(--glass)}
+.branch.b-noanswer{background:linear-gradient(180deg,var(--inbound-glow),transparent);border-color:rgba(59,130,246,.2)}
+.branch.b-dead{background:linear-gradient(180deg,rgba(239,68,68,.1),transparent);border-color:rgba(239,68,68,.2)}
+
+/* Production callout */
+.callout{margin-top:32px;padding:24px 28px;border-radius:14px;background:linear-gradient(135deg,var(--accent-glow),transparent);border:1px solid rgba(16,185,129,.2)}
+.callout h4{font-family:var(--font-display);font-weight:700;margin-bottom:6px}
+.callout p{font-size:.875rem;color:var(--fg-muted);line-height:1.7}
+.callout strong{color:var(--fg)}
+
+/* Security */
+.security-section{padding:60px 0}
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.sec-item{display:flex;gap:14px;padding:22px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;transition:transform .2s}
+.sec-item:hover{transform:translateY(-2px)}
+.sec-icon{width:40px;height:40px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent)}
+.sec-item h4{font-size:.875rem;font-weight:700;margin-bottom:3px}
+.sec-item p{font-size:.8125rem;color:var(--fg-muted);line-height:1.5}
+
+/* Tech stack */
+.stack-section{padding:60px 0}
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+.stack-item{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;transition:transform .2s}
+.stack-item:hover{transform:translateY(-2px)}
+.stack-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stack-name{font-weight:700;font-size:.875rem}
+.stack-role{font-size:.75rem;color:var(--fg-muted)}
+
+/* CTA */
+.cta{text-align:center;padding:80px 0}
+.cta h2{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:12px}
+.cta p{color:var(--fg-muted);max-width:480px;margin:0 auto 28px;font-size:.9375rem}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--accent);color:#fff;padding:14px 32px;border-radius:12px;
+  text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:.9375rem;
+  box-shadow:0 4px 20px var(--accent-glow);transition:all .3s;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--accent-glow),0 0 60px var(--accent-glow)}
+
+/* Footer */
+.footer{border-top:1px solid var(--border);padding:32px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-left{font-size:.8125rem;color:var(--fg-muted)}
+.footer-links{display:flex;gap:20px;list-style:none;padding:0}
+.footer-links a{color:var(--fg-muted);text-decoration:none;font-size:.8125rem;transition:color .2s}
+.footer-links a:hover{color:var(--fg)}
+
+/* Scroll animations */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+
+/* Section headers */
+.sh-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.sh-title{font-family:var(--font-display);font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;margin-bottom:8px;text-wrap:balance}
+.sh-desc{color:var(--fg-muted);max-width:560px;margin-bottom:40px;font-size:.9375rem}
+
+/* Responsive */
+@media(max-width:640px){
+  .hero{padding:60px 0 40px}
+  .stats{gap:24px}
+  .nav-links{gap:14px}
+  .branches{grid-template-columns:repeat(2,1fr)}
+  .card-specs{grid-template-columns:1fr}
+  .footer{flex-direction:column;text-align:center}
+  .arch-title-row{flex-direction:column;align-items:flex-start}
+  .orb{opacity:.2}
+}
+</style>
+
+<!-- Animated BG -->
+<div class="hero-bg">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="wrap">
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="#" class="nav-brand"><span class="dot"></span> AI Voice Agent</a>
+    <ul class="nav-links">
+      <li><a href="#demos">Try Demo</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#stack">Stack</a></li>
+      <li><a href="https://github.com/utkarshkapoor95/ai-voice-agent" target="_blank">GitHub</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      Portfolio Project
+    </div>
+    <h1>Dual-Mode <span class="grad">Voice AI</span> System</h1>
+    <p>An inbound clinic receptionist and an outbound lead qualification campaign, powered by two voice AI platforms, unified by n8n workflow automation with intelligent branching and a Telegram approval gate.</p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" data-target="2">0</div>
+        <div class="stat-lbl">Voice AI Platforms</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" data-target="5000" data-suffix="+">0</div>
+        <div class="stat-lbl">Production Calls Made</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" data-target="8" data-prefix="~" data-suffix="%">0</div>
+        <div class="stat-lbl">Positive Response Rate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" data-target="4">0</div>
+        <div class="stat-lbl">Outcome Branches</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- DEMO SECTION with interactive widgets -->
+  <section id="demos" class="demo-section">
+    <div class="sh-label reveal">Try It Live</div>
+    <h2 class="sh-title reveal">Two Agents, Two Platforms, One System</h2>
+    <p class="sub reveal">Click either demo to experience the AI voice agents firsthand. Each runs on a different platform.</p>
+
+    <div class="demo-cards">
+      <!-- Inbound Card -->
+      <div class="demo-card inbound reveal">
+        <div class="card-glow"></div>
+        <div class="card-body">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+            <div class="titles">
+              <h3>Inbound Receptionist</h3>
+              <div class="agent">Priya at SkinGlow Clinic</div>
+            </div>
+          </div>
+
+          <div class="platform-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Vapi.ai  (Browser Voice)
+          </div>
+
+          <div class="card-specs">
+            <div class="spec"><div class="spec-label">Channel</div><div class="spec-value">WebRTC</div></div>
+            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs</div></div>
+            <div class="spec"><div class="spec-label">LLM</div><div class="spec-value">GPT-4o</div></div>
+            <div class="spec"><div class="spec-label">Cost</div><div class="spec-value">~$0.05/min</div></div>
+          </div>
+
+          <div class="card-desc">
+            <strong>Talk to Priya:</strong> Ask about acne treatment, hair care, pigmentation, skin allergies, pediatric skin conditions, or nail infections. Try booking an appointment!
+          </div>
+
+          <button class="demo-btn inbound-btn" onclick="startInboundDemo()">
+            <div class="mic-wave"><span></span><span></span><span></span><span></span><span></span></div>
+            Talk to Priya (Mic)
+          </button>
+          <div class="demo-note">Opens browser voice chat. Requires microphone access.</div>
+        </div>
+      </div>
+
+      <!-- Outbound Card -->
+      <div class="demo-card outbound reveal reveal-delay-1">
+        <div class="card-glow"></div>
+        <div class="card-body">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="titles">
+              <h3>Outbound Lead Qualifier</h3>
+              <div class="agent">Maya at AutoScale Solutions</div>
+            </div>
+          </div>
+
+          <div class="platform-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Bolna.ai  (Phone Call)
+          </div>
+
+          <div class="card-specs">
+            <div class="spec"><div class="spec-label">Channel</div><div class="spec-value">Telephony</div></div>
+            <div class="spec"><div class="spec-label">Voice</div><div class="spec-value">ElevenLabs</div></div>
+            <div class="spec"><div class="spec-label">Classification</div><div class="spec-value">Groq LLama 3.3</div></div>
+            <div class="spec"><div class="spec-label">Cost</div><div class="spec-value">~$0.06/min</div></div>
+          </div>
+
+          <div class="card-desc">
+            <strong>Get a call from Maya:</strong> She'll ask about your business challenges and pitch relevant services. Experience AI-powered lead qualification firsthand.
+          </div>
+
+          <button class="demo-btn outbound-btn" onclick="openOutboundModal()">
+            <span class="phone-ring">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            Request a Call from Maya
+          </button>
+          <div class="demo-note">Triggers an actual AI phone call. Owner approval required via Telegram.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section id="architecture" class="arch-section">
+    <div class="sh-label reveal">Architecture</div>
+    <h2 class="sh-title reveal">Outbound Campaign Flow</h2>
+    <p class="sh-desc reveal">Each lead goes through a 10-node n8n workflow with retry logic, Groq intent classification, and four distinct outcome branches.</p>
+
+    <div class="arch-container reveal">
+      <div class="arch-title-row">
+        <h3>Node-by-Node Pipeline</h3>
+        <span style="font-size:.75rem;color:var(--fg-dim)">Scroll to see full flow &rarr;</span>
+      </div>
+
+      <div class="flow-scroll">
+        <div class="flow-pipeline">
+          <div class="flow-node n-trigger">Schedule<br>Trigger</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-process">Get Leads<br>from Sheet</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-process">Loop Over<br>Each Lead</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-process">Clean Phone<br>E.164</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-api">Bolna API<br>Place Call</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-process">Wait<br>120s</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-api">Bolna API<br>Get Status</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-decision">Picked<br>Up?</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-api">Groq LLM<br>Classify</div>
+          <div class="flow-arrow"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-4-4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="flow-node n-decision">Intent?</div>
+        </div>
+      </div>
+
+      <!-- Four outcome branches -->
+      <div class="branches">
+        <div class="branch b-interested">
+          <div class="branch-icon">&#9989;</div>
+          <div class="branch-name">Interested</div>
+          <div class="branch-actions">Opportunity email<br>Sheet: Mark Interested<br>Telegram alert to owner</div>
+        </div>
+        <div class="branch b-not">
+          <div class="branch-icon">&#10060;</div>
+          <div class="branch-name">Not Interested</div>
+          <div class="branch-actions">Reassurance email<br>Sheet: Mark Not Interested</div>
+        </div>
+        <div class="branch b-noanswer">
+          <div class="branch-icon">&#128222;</div>
+          <div class="branch-name">No Answer</div>
+          <div class="branch-actions">"We tried calling" email<br>Retry in 3 days</div>
+        </div>
+        <div class="branch b-dead">
+          <div class="branch-icon">&#128128;</div>
+          <div class="branch-name">Dead Contact</div>
+          <div class="branch-actions">"Door is open" email<br>No more retries</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout reveal">
+      <h4>Based on Production Infrastructure</h4>
+      <p>The outbound workflow architecture is adapted from a production system that made <strong>5,000+ outbound calls</strong> with an <strong>~8% positive response rate</strong> (~400 qualified leads) during a real client engagement. The production system ran daily scheduled campaigns with Airtable as the data store.</p>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section class="security-section">
+    <div class="sh-label reveal">Security</div>
+    <h2 class="sh-title reveal">Telegram Approval Gate</h2>
+    <p class="sh-desc reveal">Both demos are gated to prevent unauthorized API credit usage.</p>
+
+    <div class="sec-grid">
+      <div class="sec-item reveal">
+        <div class="sec-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <h4>Owner-Only Activation</h4>
+          <p>Every demo trigger sends a Telegram message. Calls proceed only after explicit approval.</p>
+        </div>
+      </div>
+      <div class="sec-item reveal reveal-delay-1">
+        <div class="sec-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h4>Credit Protection</h4>
+          <p>No anonymous visitor can burn Vapi or Bolna credits. The gate blocks all unauthorized calls.</p>
+        </div>
+      </div>
+      <div class="sec-item reveal reveal-delay-2">
+        <div class="sec-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div>
+          <h4>Sanitized Workflows</h4>
+          <p>All API keys, agent IDs, and client details are stripped from public workflow files.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section id="stack" class="stack-section">
+    <div class="sh-label reveal">Tech Stack</div>
+    <h2 class="sh-title reveal">Built With</h2>
+
+    <div class="stack-grid">
+      <div class="stack-item reveal"><div class="stack-dot" style="background:var(--inbound)"></div><div><div class="stack-name">Vapi.ai</div><div class="stack-role">Inbound voice (WebRTC)</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:var(--outbound)"></div><div><div class="stack-name">Bolna.ai</div><div class="stack-role">Outbound telephony</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:var(--accent)"></div><div><div class="stack-name">n8n</div><div class="stack-role">Workflow engine (self-hosted)</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#F97316"></div><div><div class="stack-name">Groq</div><div class="stack-role">LLM intent classification</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#0284C7"></div><div><div class="stack-name">Brevo</div><div class="stack-role">Transactional email (4 templates)</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#22C55E"></div><div><div class="stack-name">Google Sheets</div><div class="stack-role">Lead tracking + status</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#0088CC"></div><div><div class="stack-name">Telegram Bot</div><div class="stack-role">Approval gate + alerts</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#0080FF"></div><div><div class="stack-name">DigitalOcean</div><div class="stack-role">n8n hosting</div></div></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2 class="reveal">Want to See It Live?</h2>
+    <p class="reveal">Try the inbound demo above, or book a walkthrough where I run the full outbound campaign in real time.</p>
+    <a href="https://calendly.com/utkarshkapoor1995" target="_blank" class="cta-btn reveal">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Book a Walkthrough
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-left">Built by Utkarsh Kapoor &middot; AI Automation & Data Systems</div>
+    <ul class="footer-links">
+      <li><a href="https://utkarshkapoor.com" target="_blank">Portfolio</a></li>
+      <li><a href="https://github.com/utkarshkapoor95" target="_blank">GitHub</a></li>
+    </ul>
+  </footer>
+</div>
+
+<!-- Outbound Demo Modal -->
+<div class="modal-overlay" id="outboundModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeOutboundModal()">&times;</button>
+    <h3><span class="phone-ring" style="display:inline-block;margin-right:6px">&#128222;</span> Request a Call from Maya</h3>
+    <p>Maya from AutoScale Solutions will call you to discuss your business and qualify your needs. This triggers a real AI phone call.</p>
+    <form id="outboundForm" onsubmit="submitOutboundDemo(event)">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="tel" name="phone" placeholder="Phone (+91XXXXXXXXXX)" required>
+      <input type="text" name="company" placeholder="Your Company (optional)">
+      <button type="submit" class="modal-submit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Place the Call
+      </button>
+    </form>
+    <div class="modal-info">
+      <strong>How it works:</strong> Your request goes to the project owner's Telegram. Once approved, Maya (AI agent) will call the number you provided. The call is recorded for demo purposes. Standard call charges may apply.
+    </div>
+  </div>
+</div>
+
+<script>
+// Counter animation
+function animateCounters() {
+  document.querySelectorAll('.stat-val').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const duration = 1500;
+    const start = performance.now();
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(eased * target);
+      el.textContent = prefix + current.toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  });
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Run counters when hero is visible
+const heroObserver = new IntersectionObserver(([entry]) => {
+  if (entry.isIntersecting) { animateCounters(); heroObserver.disconnect(); }
+}, { threshold: 0.3 });
+heroObserver.observe(document.querySelector('.stats'));
+
+// ===== INBOUND DEMO (Vapi) =====
+function startInboundDemo() {
+  // Vapi Web SDK - loads the widget and starts a call
+  // Replace YOUR_VAPI_PUBLIC_KEY and YOUR_VAPI_ASSISTANT_ID with real values
+  const VAPI_PUBLIC_KEY = 'YOUR_VAPI_PUBLIC_KEY';
+  const ASSISTANT_ID = 'YOUR_VAPI_ASSISTANT_ID';
+
+  if (VAPI_PUBLIC_KEY === 'YOUR_VAPI_PUBLIC_KEY') {
+    alert('Inbound demo is being set up. The Vapi assistant ID needs to be configured. Contact Utkarsh for a live walkthrough.');
+    return;
+  }
+
+  // Dynamic script loading for Vapi
+  if (!window.vapiSDK) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.0/dist/vapi.min.js';
+    script.onload = function() {
+      const vapi = new window.Vapi(VAPI_PUBLIC_KEY);
+      vapi.start(ASSISTANT_ID);
+    };
+    document.head.appendChild(script);
+  }
+}
+
+// ===== OUTBOUND DEMO (Bolna via n8n webhook) =====
+function openOutboundModal() {
+  document.getElementById('outboundModal').classList.add('active');
+}
+function closeOutboundModal() {
+  document.getElementById('outboundModal').classList.remove('active');
+}
+// Close on backdrop click
+document.getElementById('outboundModal').addEventListener('click', function(e) {
+  if (e.target === this) closeOutboundModal();
+});
+
+function submitOutboundDemo(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    name: form.name.value,
+    phone: form.phone.value,
+    company: form.company.value || 'Not specified'
+  };
+
+  // Replace with your actual n8n webhook URL
+  const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL/webhook/outbound-demo';
+
+  if (WEBHOOK_URL.includes('YOUR_N8N_WEBHOOK_URL')) {
+    alert('Outbound demo is being configured. The n8n webhook URL needs to be set up. Contact Utkarsh for a live demo.');
+    closeOutboundModal();
+    return;
+  }
+
+  const btn = form.querySelector('.modal-submit');
+  btn.textContent = 'Sending request...';
+  btn.disabled = true;
+
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(() => {
+    btn.textContent = 'Request sent! Check Telegram.';
+    btn.style.background = '#059669';
+    setTimeout(() => closeOutboundModal(), 2500);
+  })
+  .catch(() => {
+    btn.textContent = 'Request sent! Awaiting approval.';
+    btn.style.background = '#059669';
+    setTimeout(() => closeOutboundModal(), 2500);
+  });
+}
+</script>

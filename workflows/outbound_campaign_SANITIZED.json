@@ -1,0 +1,877 @@
+{
+  "name": "ITI College Workflow with AI voice with extended Loops",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "ITI Colleges",
+          "mode": "name"
+        },
+        "filterByFormula": "AND(NOT({Coordinator Phone} = ''),OR({Call Status} = '', {Call Status} = 'No Answer'),NOT({Call Status} = 'Interested'),NOT({Call Status} = 'Not Interested'),NOT({Call Status} = 'Dead Contact'),OR({Last Called} = '', DATETIME_DIFF(NOW(), {Last Called}, 'days') >= 3))",
+        "returnAll": false,
+        "limit": 150,
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "=College Name"
+            }
+          ]
+        }
+      },
+      "id": "301bd2f2-d5a7-4c14-b8c2-e8cbca2ed667",
+      "name": "Airtable \u2014 Get ITI Colleges",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        480
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Airtable-Fresh"
+        }
+      },
+      "notes": "Picks up: (1) fresh records where Call Status is empty, AND (2) records marked No Answer - 1 that were last called 3+ days ago. Skips records with no phone number."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c3fd62e0-c754-4fb9-aa9c-ad43dcb29f9d",
+      "name": "Loop Over Colleges",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1472,
+        480
+      ],
+      "notes": "Processes one college at a time. Output [0] = current item. Output [1] = done signal (not connected \u2014 workflow ends cleanly when all records are processed)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.bolna.ai/call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"agent_id\": \"YOUR_BOLNA_AGENT_ID\",\n\"recipient_phone_number\": \"{{ $json['Coordinator Phone'] }}\",\n  \"user_data\": {\n    \"name\": \"{{ $json['Coordinator Name'] }}\",\n    \"college\": \"{{ $json['College Name'] }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "07bcc081-3dd1-4ab3-8824-258d96f33d20",
+      "name": "Bolna.ai \u2014 Place Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -928,
+        480
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Bolona Key"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Places outbound call via Bolna.ai to the coordinator's phone. PHONE FORMAT: Airtable must store numbers in international format e.g. +919876543210. Bolna returns a call_id used in the next step. Agent ID is already set."
+    },
+    {
+      "parameters": {
+        "url": "=https://api.bolna.ai/agent/YOUR_BOLNA_AGENT_ID/execution/{{ $('Bolna.ai \u2014 Place Call').item.json.execution_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "4094c1ac-5857-47f6-830b-854c33396a27",
+      "name": "Bolna \u2014 Get Call Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -512,
+        480
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Bolona Key"
+        }
+      },
+      "notes": "Fetches full call data from Bolna. Key fields used downstream: conversation_duration (to detect pickup) and transcript (for Claude analysis). IF THIS FAILS: Bolna might return 'id' instead of 'call_id' in the POST response \u2014 open this node and change call_id to id in the URL."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-picked-up",
+              "leftValue": "={{ !!$json.transcript }}",
+              "rightValue": {},
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "53cbadeb-6c42-4cb0-8d5a-8ef6e39a61ee",
+      "name": "IF \u2014 Did They Pick Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        480
+      ],
+      "notes": "TRUE [0] = conversation_duration > 0 meaning someone spoke. FALSE [1] = null or 0 duration meaning no answer or busy. Number() safely converts null to 0."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-interested",
+              "leftValue": "={{ $json.choices[0].message.content }}",
+              "rightValue": "Interested",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fe21805e-b138-4268-b533-0ddf0c172807",
+      "name": "IF \u2014 Interested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        144,
+        288
+      ],
+      "notes": "TRUE [0] = Claude said YES (coordinator is interested). FALSE [1] = Claude said NO. caseSensitive is false so YES / yes / Yes all match."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "YOUR_BREVO_API_KEY_HERE"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sender\": {\n    \"name\": \"[Client] Team\",\n    \"email\": \"outreach@example.com\"\n  },\n  \"to\": [\n    {\n      \"email\": \"{{ $('Loop Over Colleges').item.json['Coordinator Email'] }}\",\n      \"name\": \"{{ $('Loop Over Colleges').item.json['Coordinator Name'] }}\"\n    }\n  ],\n  \"subject\": \"Thank You for Connecting with [Client Job Platform] \u2014 Next Steps Enclosed\",\n  \"htmlContent\": \"<p>Dear Sir/Madam,</p><p>Hope you are doing well.</p><p>It was great speaking with you today! I am Gargi from [Client Job Platform] \u2014 a free digital job portal specifically designed for ITI, Polytechnic, and entry-level candidates across India.</p><p>As discussed on the call, [Client Job Platform] helps students from institutions like yours directly connect with verified employers \u2014 at no cost whatsoever.</p><p><strong>What students get on [Client Job Platform]:</strong><br>\u2022 Registration is completely free<br>\u2022 Job applications are free \u2014 aaj bhi, kal bhi, aur future mein bhi<br>\u2022 Direct interview opportunities from verified employers across India<br>\u2022 City-wise, trade-wise, and skill-set-based job search<br>\u2022 Regular WhatsApp job alerts for new openings</p><p>Currently, the platform has <strong>3,000+ active job openings</strong> across manufacturing, automotive, electrical, aerospace, operations, and technical sectors \u2014 with new vacancies added regularly.</p><p>We work with reputed employers such as <strong>[verified employer names]</strong>, among others.</p><p><strong>How students can get started:</strong><br>\u2022 Download the [Client Job Platform] app<br>\u2022 Complete registration and create their profile<br>\u2022 Apply directly to suitable job openings<br>\u2022 If profile matches, employer contacts them for interview</p><p>You are welcome to share this information with your faculty, admin team, or directly with students.</p><p><strong>Platform Link:</strong> <a href='https://example.com/'>https://example.com/</a></p><p>Looking forward to supporting your students with the right opportunities. Please feel free to connect anytime.</p><p>Thank you<br>Gargi \u2013 BDE<br>[Client Job Platform]</p>\"\n}",
+        "options": {}
+      },
+      "id": "574c0d3a-bcee-4817-ab6a-5503a438a931",
+      "name": "Brevo \u2014 Opportunity Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        80
+      ],
+      "notes": "ACTION REQUIRED: Replace PASTE_YOUR_BREVO_API_KEY_HERE with your actual Brevo API key. Find it at: Brevo dashboard \u2192 Settings \u2192 SMTP and API \u2192 API Keys. It starts with xkeysib-"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "YOUR_BREVO_API_KEY_HERE"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sender\": {\n    \"name\": \"[Client] Team\",\n    \"email\": \"outreach@example.com\"\n  },\n  \"to\": [\n    {\n      \"email\": \"{{ $('Loop Over Colleges').item.json['Coordinator Email'] }}\",\n      \"name\": \"{{ $('Loop Over Colleges').item.json['Coordinator Name'] }}\"\n    }\n  ],\n  \"subject\": \"Thank You from [Client Job Platform] \u2014 Here for You Whenever the Need Arises\",\n  \"htmlContent\": \"<p>Dear Sir/Madam,</p><p>Thank you for taking the time to speak with us today.</p><p>I completely understand that there may not be an immediate requirement at your end right now \u2014 and that is perfectly fine.</p><p>I am Gargi from [Client Job Platform] \u2014 a free digital job portal designed for ITI, Polytechnic, and entry-level candidates. The platform connects students directly with verified employers across India at absolutely no charge \u2014 no placement fees today, and no fees in the future either.</p><p><strong>At a glance \u2014 what [Client Job Platform] offers:</strong><br>\u2022 3,000+ active job openings across manufacturing, automotive, electrical, aerospace, and operations<br>\u2022 City-wise, trade-wise, and skill-set-based job search for students<br>\u2022 Direct employer connect \u2014 no middlemen, no charges<br>\u2022 Regular WhatsApp job alerts</p><p>Whenever your students are exploring opportunities in the future, [Client Job Platform] will be there as a platform they can rely on \u2014 free of cost, always.</p><p><strong>Platform Link:</strong> <a href='https://example.com/'>https://example.com/</a></p><p>We would be happy to collaborate whenever suitable. Wishing you and your institution all the best!</p><p>Thank you<br>Gargi \u2013 BDE<br>[Client Job Platform]</p>\"\n}",
+        "options": {}
+      },
+      "id": "962cb75d-fe85-4ad6-a99d-6dec0d89ac0c",
+      "name": "Brevo \u2014 Reassurance Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        464
+      ],
+      "notes": "ACTION REQUIRED: Replace PASTE_YOUR_BREVO_API_KEY_HERE with your actual Brevo API key (same key as the Opportunity Email node)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-second-attempt",
+              "leftValue": "={{ Number($('Airtable \u2014 Get ITI Colleges').item.json['Call Attempts'] ?? 0) }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8696408c-a874-456d-ab18-b13273a0d3f8",
+      "name": "IF \u2014 2nd Attempt?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        688
+      ],
+      "notes": "Checks the original Airtable record's Call Status. TRUE [0] = Call Status was 'No Answer - 1' meaning this is the SECOND failed attempt \u2192 Dead Contact. FALSE [1] = Call Status was empty, this is the FIRST failed attempt \u2192 send email, mark No Answer - 1, retry in 3 days."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "YOUR_BREVO_API_KEY_HERE"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sender\": {\n    \"name\": \"[Client] Team\",\n    \"email\": \"outreach@example.com\"\n  },\n  \"to\": [\n    {\n      \"email\": \"{{ $('Loop Over Colleges').item.json['Coordinator Email'] }}\",\n      \"name\": \"{{ $('Loop Over Colleges').item.json['Coordinator Name'] }}\"\n    }\n  ],\n  \"subject\": \"Introduction to [Client Job Platform] \u2014 Placement Support for ITI & Polytechnic Students\",\n  \"htmlContent\": \"<p>Dear Sir/Madam,</p><p>Hope you are doing well.</p><p>I tried reaching out to you today. I am Gargi from [Client Job Platform] \u2014 a free digital job portal dedicated to ITI, Polytechnic, and entry-level candidates across India.</p><p>[Client Job Platform] connects students directly with verified employers \u2014 no placement fees, no hidden charges. Aaj nahi, kal nahi, future mein bhi koi charge nahi hoga.</p><p><strong>What students can do on [Client Job Platform]:</strong><br>\u2022 Register for free and build their job profile<br>\u2022 Search jobs by city, trade, skill set, or industry preference<br>\u2022 Apply directly to opportunities \u2014 no middlemen<br>\u2022 Get interviewed directly by employers when profile matches<br>\u2022 Receive regular WhatsApp job alerts</p><p>The platform currently has <strong>3,000+ active openings</strong> across manufacturing, automotive, electrical, aerospace, operations, and technical sectors \u2014 with new vacancies added regularly.</p><p><strong>Platform Link:</strong> <a href='https://example.com/'>https://example.com/</a></p><p>We would love to connect and support your students with the right placement opportunities. Please feel free to call or reply to this email at your convenience.</p><p>Thank you<br>Gargi \u2013 BDE<br>[Client Job Platform]</p>\"\n}",
+        "options": {}
+      },
+      "id": "628b0ca5-39d8-49c9-8ace-f7aa466805b2",
+      "name": "Brevo \u2014 No Answer Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        896
+      ],
+      "notes": "Sent after FIRST failed attempt. Informs the coordinator we tried calling and will try again in a few days. ACTION REQUIRED: Replace PASTE_YOUR_BREVO_API_KEY_HERE."
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID/ITI%20Colleges/{{ $('Loop Over Colleges').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"fields\": {\"Call Attempts\": {{ Number($(\"Airtable \u2014 Get ITI Colleges\").item.json[\"Call Attempts\"] ?? 0) + 1 }},\"Call Status\": \"No Answer\",\"Last Called\": \"{{ $now.setZone('Asia/Kolkata').toISODate() }}\"}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        544,
+        896
+      ],
+      "id": "28666bfd-962f-4349-b1ea-d4a4d8513b8b",
+      "name": "Airtable update \u2014No answer",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID/ITI%20Colleges/{{ $('Airtable \u2014 Get ITI Colleges').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"Call Status\": \"Interested\",\n    \"Last Called\": \"{{ $now.setZone('Asia/Kolkata').toISODate() }}\",\n    \"Call Attempts\": {{ Number($('Airtable \u2014 Get ITI Colleges').item.json['Call Attempts'] ?? 0) + 1 }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        576,
+        80
+      ],
+      "id": "cdf87dc1-dd84-4ba2-987d-8e7ce9a616bb",
+      "name": "Airtable update \u2014 Interested",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID/ITI%20Colleges/{{ $('Airtable \u2014 Get ITI Colleges').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"Call Status\": \"Not Interested\",\n    \"Call Attempts\": {{ Number($('Airtable \u2014 Get ITI Colleges').item.json['Call Attempts'] ?? 0) + 1 }},\n    \"Last Called\": \"{{ $now.setZone('Asia/Kolkata').toISODate() }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        608,
+        464
+      ],
+      "id": "af86fbbd-1f48-4966-9e1b-c61e7421203a",
+      "name": "Airtable update - Not Interested",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID/ITI%20Colleges/{{ $('Airtable \u2014 Get ITI Colleges').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"Call Status\": \"Dead Contact\",\n    \"Last Called\": \"{{ $now.setZone('Asia/Kolkata').toISODate() }}\",\n    \"Call Attempts\": {{ Number($('Airtable \u2014 Get ITI Colleges').item.json['Call Attempts'] ?? 0) + 1 }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        544,
+        672
+      ],
+      "id": "c10561d6-37ca-40e6-9779-b09345f0c5fd",
+      "name": "Airtable update - Dead Contact",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 11 * * *"
+            }
+          ]
+        }
+      },
+      "id": "d99adf73-0a50-4651-acff-c9c05c1185f8",
+      "name": "Schedule \u2014 Daily 11AM IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1952,
+        480
+      ],
+      "notes": "Runs every day at 9:00 AM IST (3:30 AM UTC). To test manually, use the Execute Workflow button instead."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "abb660e6-aa1a-4dbf-8a30-0f4fdff6062a",
+              "leftValue": "={{ $json['Last Called'] ? $now.diff(DateTime.fromISO($json['Last Called']), 'days').days : 999 }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "19775958-1ab5-44f7-a7f7-db76bee7e693",
+              "leftValue": "={{ $json['Call Status'] ?? '' }}",
+              "rightValue": "Interested",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "4a831d44-7540-4b03-8a7e-59cdcd0e746b",
+              "leftValue": "={{ $json['Call Status'] ?? '' }}",
+              "rightValue": "Not Interested",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "c4773a33-3e9a-448d-954b-fa5b84211605",
+              "leftValue": "={{ $json['Call Status'] ?? '' }}",
+              "rightValue": "Dead Contact",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "time-window-check",
+              "leftValue": "={{ $now.setZone('Asia/Kolkata').hour }}",
+              "rightValue": 17,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1200,
+        512
+      ],
+      "id": "610f2cec-15af-4faa-80d9-67294da3be31",
+      "name": "Skip if Called Recently"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "YOUR_BREVO_API_KEY_HERE"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sender\": {\n    \"name\": \"[Client] Team\",\n    \"email\": \"outreach@example.com\"\n  },\n  \"to\": [\n    {\n      \"email\": \"{{ $('Loop Over Colleges').item.json['Coordinator Email'] }}\",\n      \"name\": \"{{ $('Loop Over Colleges').item.json['Coordinator Name'] }}\"\n    }\n  ],\n  \"subject\": \"Final Follow-up \u2014 [Client Job Platform] Placement Platform for Your Students\",\n  \"htmlContent\": \"<p>Dear Sir/Madam,</p><p>Hope you are doing well.</p><p>We attempted to connect with you twice regarding [Client Job Platform], a free digital job portal supporting ITI, Polytechnic, and entry-level students across India. Since we could not reach you over the call, we are briefly sharing our details over email for your reference.</p><p><strong>About [Client Job Platform] \u2014 Quick Summary:</strong><br>\u2022 Pan-India job platform with 3,000+ active openings<br>\u2022 Sectors: Manufacturing, Automotive, Electrical, Aerospace, Operations, Technical<br>\u2022 Students can register, apply, and get interviewed \u2014 completely free<br>\u2022 City-wise, trade-wise, and skill-set-based job search available<br>\u2022 Regular WhatsApp job alerts for new opportunities<br>\u2022 Zero charges \u2014 registration free, applications free, always</p><p><strong>How students can join:</strong><br>\u2022 Download the [Client Job Platform] app<br>\u2022 Complete registration and create profile<br>\u2022 Apply to suitable jobs directly<br>\u2022 Employers contact shortlisted candidates for interviews</p><p><strong>Platform Link:</strong> <a href='https://example.com/'>https://example.com/</a></p><p>If your institution would like to explore placement support opportunities for your students at any point in the future, we would be glad to connect at a time that is convenient for you.</p><p>Thank you for your time. We wish you and your institution all the very best.</p><p>Thank you<br>Gargi \u2013 BDE<br>[Client Job Platform]</p>\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        672
+      ],
+      "id": "87a1f409-3f77-42cd-ac6b-780eac2eca7a",
+      "name": "Brevo \u2014 Dead Contact Email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 1024,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(\"Analyze this call transcript and classify the outcome.\\n\\nRules:\\n- If the transcript only shows the assistant speaking with no user response, classify as NotInterested.\\n- If the user hung up immediately or said nothing meaningful, classify as NotInterested.\\n- If the user engaged in conversation but declined or showed no interest, classify as NotInterested.\\n- If the user asked questions, requested details, or agreed to share info with students, classify as Interested.\\n\\nTranscript:\\n\" + $json.transcript + \"\\n\\nRespond with ONLY one word:\\n- Interested\\n- NotInterested\") }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "438a9927-6cbf-4d00-a8fc-e833af4847ba",
+      "name": "Groq \u2014 Analyze Transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        288
+      ],
+      "notes": "Uses Claude Haiku to read the Hindi/Hinglish/English transcript and return YES or NO. max_tokens is 10 because we only need one word back \u2014 keeps cost minimal (~$0.0001 per call analysis)."
+    },
+    {
+      "parameters": {
+        "amount": 120
+      },
+      "id": "a0ddfda8-0025-4460-a0e0-8c132cec2b3d",
+      "name": "Wait - 120sec",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        480
+      ],
+      "webhookId": "voice-agent-wait-call",
+      "notes": "Waits 5 minutes for the call to complete before fetching the result. Adjust if your calls are consistently shorter or longer. Most calls in call history were 2-4 minutes."
+    },
+    {
+      "parameters": {
+        "jsCode": "let phone = $input.item.json['Coordinator Phone'] || '';\n\n// Strip everything except digits and +\nphone = phone.replace(/[^0-9+]/g, '');\n\n// If it's 10 digits (Indian local), add +91\nif (/^[6-9]\\d{9}$/.test(phone)) {\n  phone = '+91' + phone;\n}\n\n// If it starts with 91 but no +, add +\nif (/^91[6-9]\\d{9}$/.test(phone)) {\n  phone = '+' + phone;\n}\n\n// If it's still not a valid +91 number, skip it\nif (!/^\\+91[6-9]\\d{9}$/.test(phone)) {\n  return [];\n}\n\n$input.item.json['Coordinator Phone'] = phone;\nreturn {json: $input.item.json};",
+        "mode": "runOnceForEachItem"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1064,
+        512
+      ],
+      "id": "clean-phone-number-001",
+      "name": "Clean Phone Number"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Airtable \u2014 Get ITI Colleges": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Colleges": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Skip if Called Recently",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bolna.ai \u2014 Place Call": {
+      "main": [
+        [
+          {
+            "node": "Wait - 120sec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bolna \u2014 Get Call Status": {
+      "main": [
+        [
+          {
+            "node": "IF \u2014 Did They Pick Up?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF \u2014 Did They Pick Up?": {
+      "main": [
+        [
+          {
+            "node": "Groq \u2014 Analyze Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF \u2014 2nd Attempt?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF \u2014 Interested?": {
+      "main": [
+        [
+          {
+            "node": "Brevo \u2014 Opportunity Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Brevo \u2014 Reassurance Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brevo \u2014 Opportunity Email": {
+      "main": [
+        [
+          {
+            "node": "Airtable update \u2014 Interested",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brevo \u2014 Reassurance Email": {
+      "main": [
+        [
+          {
+            "node": "Airtable update - Not Interested",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF \u2014 2nd Attempt?": {
+      "main": [
+        [
+          {
+            "node": "Brevo \u2014 Dead Contact Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Brevo \u2014 No Answer Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brevo \u2014 No Answer Email": {
+      "main": [
+        [
+          {
+            "node": "Airtable update \u2014No answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable update - Not Interested": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule \u2014 Daily 11AM IST": {
+      "main": [
+        [
+          {
+            "node": "Airtable \u2014 Get ITI Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip if Called Recently": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Clean Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brevo \u2014 Dead Contact Email": {
+      "main": [
+        [
+          {
+            "node": "Airtable update - Dead Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq \u2014 Analyze Transcript": {
+      "main": [
+        [
+          {
+            "node": "IF \u2014 Interested?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable update \u2014 Interested": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable update - Dead Contact": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable update \u2014No answer": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Colleges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - 120sec": {
+      "main": [
+        [
+          {
+            "node": "Bolna \u2014 Get Call Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Bolna.ai \u2014 Place Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7e2a1c3d-5317-4d21-a64a-303fed8ca11a",
+  "meta": {
+    "instanceId": "SANITIZED"
+  },
+  "id": "SANITIZED",
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T09:41:47.523Z",
+      "createdAt": "2026-05-21T09:41:47.523Z",
+      "id": "SANITIZED",
+      "name": "[Client]"
+    }
+  ]
+}

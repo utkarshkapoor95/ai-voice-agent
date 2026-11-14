@@ -1,0 +1,96 @@
+{
+  "name": "AI Voice Agent - Inbound Call Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-inbound",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "vapi-webhook",
+      "name": "Webhook - Vapi Call Data",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-800, 400],
+      "webhookId": "vapi-inbound",
+      "notes": "Receives call data from Vapi via server URL or end-of-call webhook. Payload includes: call_id, transcript, duration, caller info, and any collected form data."
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "caller_name", "value": "={{ $json.body.message?.call?.customer?.name || 'Unknown Visitor' }}" },
+            { "name": "call_duration", "value": "={{ $json.body.message?.call?.duration || '0' }}" },
+            { "name": "transcript", "value": "={{ $json.body.message?.transcript || 'No transcript available' }}" },
+            { "name": "timestamp", "value": "={{ $now.format('yyyy-MM-dd HH:mm:ss') }}" },
+            { "name": "call_type", "value": "inbound" },
+            { "name": "source", "value": "Vapi Web Widget" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-data",
+      "name": "Extract Call Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-560, 400],
+      "notes": "Extracts and normalizes relevant fields from Vapi's webhook payload for downstream use."
+    },
+    {
+      "parameters": {
+        "documentId": { "value": "YOUR_GOOGLE_SHEET_ID" },
+        "sheetName": { "value": "Inbound Calls" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.timestamp }}",
+            "Caller Name": "={{ $json.caller_name }}",
+            "Duration (s)": "={{ $json.call_duration }}",
+            "Transcript": "={{ $json.transcript }}",
+            "Source": "={{ $json.source }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-to-sheets",
+      "name": "Google Sheets - Log Call",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-320, 320],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{YOUR_TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"YOUR_TELEGRAM_CHAT_ID\",\n  \"text\": \"📞 New Inbound Call via SkinGlow Clinic\\n\\nCaller: {{ $json.caller_name }}\\nDuration: {{ $json.call_duration }}s\\nTime: {{ $json.timestamp }}\\n\\nTranscript preview: {{ $json.transcript.substring(0, 200) }}...\"\n}",
+        "options": {}
+      },
+      "id": "telegram-notify",
+      "name": "Telegram - Notify Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-320, 480]
+    }
+  ],
+  "connections": {
+    "Webhook - Vapi Call Data": { "main": [[{ "node": "Extract Call Data", "type": "main", "index": 0 }]] },
+    "Extract Call Data": { "main": [[
+      { "node": "Google Sheets - Log Call", "type": "main", "index": 0 },
+      { "node": "Telegram - Notify Owner", "type": "main", "index": 0 }
+    ]]}
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "demo"
+  }
+}
