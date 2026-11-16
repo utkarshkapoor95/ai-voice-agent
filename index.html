@@ -747,7 +747,8 @@ function wireVapiEvents(v){
     vapiActive=false;
     console.error('Vapi error:',e);
     setInboundLabel(inboundBtnDefaultHTML);
-    alert('Voice call error: '+((e&&e.error&&e.error.message)||(e&&e.message)||'Unknown error. Check the browser console (F12) for details.'));
+    var msg=(e&&typeof e==='string')?e:(e&&e.error&&typeof e.error==='string')?e.error:(e&&e.error&&e.error.message)?e.error.message:(e&&e.message)?e.message:JSON.stringify(e);
+    alert('Voice call error: '+msg+'\n\nIf you see this on laptop but Priya works on your phone, an ad blocker or browser extension is likely blocking the connection. Try incognito mode (Ctrl+Shift+N).');
   });
 }
 
@@ -760,9 +761,9 @@ function startInboundDemo(){
     setInboundLabel('Connecting to Priya...');
     try{vapiInstance.start(VAPI_ASSISTANT_ID)}
     catch(err){
-      console.error(err);
+      console.error('Vapi start error:',err);
       setInboundLabel(inboundBtnDefaultHTML);
-      alert('Could not start the voice call: '+err.message);
+      alert('Could not start the voice call: '+(err.message||JSON.stringify(err))+'\n\nTry incognito mode (Ctrl+Shift+N) to rule out ad blocker interference.');
     }
     return;
   }
