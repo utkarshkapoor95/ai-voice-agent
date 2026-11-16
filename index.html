@@ -335,7 +335,7 @@ body{
       Portfolio Project &middot; Live Demo
     </div>
     <h1 class="reveal">Dual-Mode<br><span class="grad-text">Voice AI System</span></h1>
-    <p class="hero-sub reveal">An inbound clinic receptionist and outbound lead qualifier, two voice AI platforms unified by n8n workflow automation with intent classification and a Telegram approval gate.</p>
+    <p class="hero-sub reveal">An inbound clinic receptionist and outbound lead qualifier, two voice AI platforms unified by n8n workflow automation with intent classification and automated demo protection.</p>
 
     <div class="stats">
       <div class="stat reveal"><div class="stat-val" data-target="2">0</div><div class="stat-lbl">AI Platforms</div></div>
@@ -384,7 +384,7 @@ body{
             <strong>Talk to Priya:</strong> Ask about acne treatment, hair care, pigmentation, skin allergies, pediatric skin conditions, or nail infections. Try booking an appointment.
           </div>
 
-          <button class="demo-btn inbound-btn" onclick="startInboundDemo()">
+          <button class="demo-btn inbound-btn" id="inboundBtn" onclick="startInboundDemo()">
             <div class="mic-wave"><span></span><span></span><span></span><span></span><span></span></div>
             Talk to Priya (Mic)
           </button>
@@ -502,7 +502,7 @@ body{
 
           <div class="flow-node">
             <div class="node-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
-            <div class="node-text">Pull leads from Google Sheets<div class="node-label">Scheduled trigger or webhook</div></div>
+            <div class="node-text">Visitor requests a demo call<div class="node-label">Webhook trigger + rate limit gate</div></div>
           </div>
 
           <div class="flow-node">
@@ -575,17 +575,17 @@ body{
   <section class="security-section">
     <div class="reveal" style="text-align:center">
       <div class="sh-label">Security</div>
-      <h2 class="sh-title">Telegram Approval Gate</h2>
-      <p class="sh-desc" style="margin-left:auto;margin-right:auto">Both demos are gated to prevent unauthorized API credit usage.</p>
+      <h2 class="sh-title">Demo Abuse Protection</h2>
+      <p class="sh-desc" style="margin-left:auto;margin-right:auto">The live demo is protected server-side so visitors cannot drain API credits.</p>
     </div>
     <div class="sec-grid">
       <div class="sec-item reveal">
         <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <div><h4>Owner-Only Activation</h4><p>Every demo trigger sends a Telegram message. Calls proceed only after explicit approval.</p></div>
+        <div><h4>Server-Side Rate Limiting</h4><p>The n8n gate allows one demo call per hour and caps daily usage. Excess requests are rejected before any API is touched.</p></div>
       </div>
       <div class="sec-item reveal reveal-d1">
         <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div><h4>Credit Protection</h4><p>No anonymous visitor can burn Vapi or Bolna credits. The gate blocks all unauthorized calls.</p></div>
+        <div><h4>Credit Protection</h4><p>Outbound calls only go to the owner's verified number, and every trigger sends an instant Telegram alert to the owner.</p></div>
       </div>
       <div class="sec-item reveal reveal-d2">
         <div class="sec-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
@@ -607,7 +607,7 @@ body{
       <div class="stack-item reveal"><div class="stack-dot" style="background:#F97316"></div><div><div class="stack-name">Groq</div><div class="stack-role">LLM intent classification</div></div></div>
       <div class="stack-item reveal"><div class="stack-dot" style="background:#0284C7"></div><div><div class="stack-name">Brevo</div><div class="stack-role">Transactional email (4 templates)</div></div></div>
       <div class="stack-item reveal"><div class="stack-dot" style="background:#22C55E"></div><div><div class="stack-name">Google Sheets</div><div class="stack-role">Lead tracking + status</div></div></div>
-      <div class="stack-item reveal"><div class="stack-dot" style="background:#0088CC"></div><div><div class="stack-name">Telegram Bot</div><div class="stack-role">Approval gate + alerts</div></div></div>
+      <div class="stack-item reveal"><div class="stack-dot" style="background:#0088CC"></div><div><div class="stack-name">Telegram Bot</div><div class="stack-role">Owner alerts</div></div></div>
       <div class="stack-item reveal"><div class="stack-dot" style="background:#0080FF"></div><div><div class="stack-name">DigitalOcean</div><div class="stack-role">n8n hosting</div></div></div>
     </div>
   </section>
@@ -648,7 +648,7 @@ body{
     </button>
 
     <div class="modal-info">
-      <strong>Note:</strong> This is a live demo with real API costs. The call goes to the project owner's verified phone number. After the call, the transcript is classified by AI and logged to Google Sheets.
+      <strong>Note:</strong> This is a live demo with real API costs, so calls are rate limited to one per hour. The call goes to the project owner's verified phone number. After the call, the transcript is classified by AI and logged to Google Sheets.
     </div>
   </div>
 </div>
@@ -721,15 +721,90 @@ document.querySelectorAll('.demo-card').forEach(card=>{
 });
 
 // ===== INBOUND DEMO (Vapi) =====
+// Uses Vapi's official HTML script tag SDK (window.vapiSDK), loaded lazily on first click.
+const VAPI_PUBLIC_KEY='ae4504c8-112b-41d8-85b3-efc7dfc5114a';
+const VAPI_ASSISTANT_ID='50ec2d63-2c6c-426a-81e6-c92eaafc7cda';
+let vapiInstance=null;
+let vapiActive=false;
+let vapiLoading=false;
+const inboundBtnDefaultHTML=document.getElementById('inboundBtn').innerHTML;
+
+function setInboundLabel(html){
+  const b=document.getElementById('inboundBtn');
+  if(b)b.innerHTML=html;
+}
+
+function wireVapiEvents(v){
+  v.on('call-start',function(){
+    vapiActive=true;
+    setInboundLabel('🔴 Live with Priya (click to end)');
+  });
+  v.on('call-end',function(){
+    vapiActive=false;
+    setInboundLabel(inboundBtnDefaultHTML);
+  });
+  v.on('error',function(e){
+    vapiActive=false;
+    console.error('Vapi error:',e);
+    setInboundLabel(inboundBtnDefaultHTML);
+    alert('Voice call error: '+((e&&e.error&&e.error.message)||(e&&e.message)||'Unknown error. Check the browser console (F12) for details.'));
+  });
+}
+
 function startInboundDemo(){
-  const VAPI_PUBLIC_KEY='ae4504c8-112b-41d8-85b3-efc7dfc5114a';
-  const ASSISTANT_ID='50ec2d63-2c6c-426a-81e6-c92eaafc7cda';
-  if(!window.vapiSDK){
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.0/dist/vapi.min.js';
-    s.onload=function(){const v=new window.Vapi(VAPI_PUBLIC_KEY);v.start(ASSISTANT_ID)};
-    document.head.appendChild(s);
+  // Toggle off if a call is live
+  if(vapiActive&&vapiInstance){vapiInstance.stop();return}
+
+  // SDK already loaded: just start the call
+  if(vapiInstance){
+    setInboundLabel('Connecting to Priya...');
+    try{vapiInstance.start(VAPI_ASSISTANT_ID)}
+    catch(err){
+      console.error(err);
+      setInboundLabel(inboundBtnDefaultHTML);
+      alert('Could not start the voice call: '+err.message);
+    }
+    return;
   }
+
+  if(vapiLoading)return;
+  vapiLoading=true;
+  setInboundLabel('Loading voice engine...');
+
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
+  s.defer=true;s.async=true;
+  s.onload=function(){
+    vapiLoading=false;
+    try{
+      vapiInstance=window.vapiSDK.run({
+        apiKey:VAPI_PUBLIC_KEY,
+        assistant:VAPI_ASSISTANT_ID,
+        config:{
+          position:'bottom-right',
+          offset:'24px',
+          width:'56px',
+          height:'56px',
+          idle:{color:'rgb(59,130,246)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/mic.svg'},
+          loading:{color:'rgb(168,85,247)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg'},
+          active:{color:'rgb(239,68,68)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/phone-off.svg'}
+        }
+      });
+      wireVapiEvents(vapiInstance);
+      setInboundLabel('Connecting to Priya...');
+      vapiInstance.start(VAPI_ASSISTANT_ID);
+    }catch(err){
+      console.error('Vapi init failed:',err);
+      setInboundLabel(inboundBtnDefaultHTML);
+      alert('Could not start the voice demo: '+err.message+'. You can also use the floating mic button at the bottom-right of the page.');
+    }
+  };
+  s.onerror=function(){
+    vapiLoading=false;
+    setInboundLabel(inboundBtnDefaultHTML);
+    alert('Could not load the Vapi voice SDK. Check your network connection or ad blocker, then try again.');
+  };
+  document.head.appendChild(s);
 }
 
 // ===== OUTBOUND DEMO (Bolna via n8n) =====
@@ -755,15 +830,23 @@ function submitOutboundDemo(){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({name:name,company:company,source:'portfolio-demo',timestamp:new Date().toISOString()})
   })
-  .then(()=>{
-    btn.textContent='Demo triggered! Call incoming...';
-    btn.style.background='linear-gradient(135deg,#059669,#047857)';
-    setTimeout(closeOutboundModal,2500);
+  .then(async function(res){
+    let data={};
+    try{data=await res.json()}catch(e){}
+    if(res.ok){
+      btn.textContent='Demo triggered! Call incoming...';
+      btn.style.background='linear-gradient(135deg,#059669,#047857)';
+      setTimeout(closeOutboundModal,3000);
+    }else{
+      btn.textContent=data.message||'Demo limit reached. Try again later.';
+      btn.style.background='linear-gradient(135deg,#d97706,#b45309)';
+      setTimeout(closeOutboundModal,4000);
+    }
   })
-  .catch(()=>{
-    btn.textContent='Demo triggered! Call incoming...';
-    btn.style.background='linear-gradient(135deg,#059669,#047857)';
-    setTimeout(closeOutboundModal,2500);
+  .catch(function(){
+    btn.textContent='Could not reach the server. Try again.';
+    btn.style.background='linear-gradient(135deg,#dc2626,#991b1b)';
+    btn.disabled=false;
   });
 }
 </script>
