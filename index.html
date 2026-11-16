@@ -428,7 +428,7 @@ body{
             </span>
             Request Demo Call
           </button>
-          <div class="demo-note">Triggers a real AI phone call. Owner approval required via Telegram.</div>
+          <div class="demo-note">Triggers a real AI phone call to the project owner's verified number.</div>
         </div>
       </div>
     </div>
@@ -630,10 +630,15 @@ body{
     <h3>Request Demo Call</h3>
     <p class="modal-desc">This triggers a real AI phone call from Maya (AutoScale Solutions). The call goes to the project owner's verified number for demonstration purposes.</p>
 
+    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0">
+      <input type="text" id="outboundName" placeholder="Your Name" style="padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--fg);font-size:0.95rem;outline:none" />
+      <input type="text" id="outboundCompany" placeholder="Your Company" style="padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--fg);font-size:0.95rem;outline:none" />
+    </div>
+
     <ol class="modal-steps">
       <li><span class="step-num">1</span>You click the button below</li>
-      <li><span class="step-num">2</span>A Telegram message is sent to the project owner</li>
-      <li><span class="step-num">3</span>Once approved, Maya calls the verified demo number</li>
+      <li><span class="step-num">2</span>The owner gets a Telegram notification</li>
+      <li><span class="step-num">3</span>Maya calls the verified demo number</li>
       <li><span class="step-num">4</span>The AI qualification conversation begins</li>
     </ol>
 
@@ -643,7 +648,7 @@ body{
     </button>
 
     <div class="modal-info">
-      <strong>Note:</strong> This is a live demo with real API costs. The Telegram approval gate ensures no unauthorized calls are placed. The call will be to the project owner's verified phone number.
+      <strong>Note:</strong> This is a live demo with real API costs. The call goes to the project owner's verified phone number. After the call, the transcript is classified by AI and logged to Google Sheets.
     </div>
   </div>
 </div>
@@ -741,20 +746,22 @@ document.getElementById('outboundModal').addEventListener('click',function(e){if
 function submitOutboundDemo(){
   const WEBHOOK_URL='https://n8n.autothynk.com/webhook/outbound-demo';
   const btn=document.getElementById('outboundSubmitBtn');
+  const name=(document.getElementById('outboundName').value||'').trim()||'Anonymous Visitor';
+  const company=(document.getElementById('outboundCompany').value||'').trim()||'Not specified';
   btn.textContent='Sending request...';btn.disabled=true;
 
   fetch(WEBHOOK_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({source:'portfolio-demo',timestamp:new Date().toISOString()})
+    body:JSON.stringify({name:name,company:company,source:'portfolio-demo',timestamp:new Date().toISOString()})
   })
   .then(()=>{
-    btn.textContent='Request sent! Awaiting approval.';
+    btn.textContent='Demo triggered! Call incoming...';
     btn.style.background='linear-gradient(135deg,#059669,#047857)';
     setTimeout(closeOutboundModal,2500);
   })
   .catch(()=>{
-    btn.textContent='Request sent! Awaiting approval.';
+    btn.textContent='Demo triggered! Call incoming...';
     btn.style.background='linear-gradient(135deg,#059669,#047857)';
     setTimeout(closeOutboundModal,2500);
   });
