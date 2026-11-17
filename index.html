@@ -750,16 +750,24 @@ function wireVapiEvents(v){
     vapiActive=false;
     console.error('Vapi error (raw):',e);
     setInboundLabel(inboundBtnDefaultHTML);
-    // Robust error message extraction -- handles string, nested .error, .message, and object types
+    // Robust error message extraction -- handles string, nested .error, .message (object or string), .msg
     var msg='Unknown error';
     try{
       if(e&&typeof e==='string'){msg=e}
       else if(e&&e.error&&typeof e.error==='string'){msg=e.error}
+      else if(e&&e.error&&e.error.msg&&typeof e.error.msg==='string'){msg=e.error.msg}
       else if(e&&e.error&&e.error.message&&typeof e.error.message==='string'){msg=e.error.message}
+      else if(e&&e.error&&e.error.message&&typeof e.error.message==='object'&&e.error.message.msg){msg=e.error.message.msg}
+      else if(e&&e.error&&e.error.errorMsg&&typeof e.error.errorMsg==='string'){msg=e.error.errorMsg}
       else if(e&&e.message&&typeof e.message==='string'){msg=e.message}
       else if(e&&typeof e.statusCode==='number'){msg='Server error ('+e.statusCode+')'}
       else{msg=JSON.stringify(e)||'Unknown error'}
     }catch(ex){msg='Error (could not parse details)'}
+    // "room was deleted" / "no-room" is Daily.js signaling normal call end -- not a user-facing error
+    if(msg.toLowerCase().indexOf('room was deleted')!==-1||msg.toLowerCase().indexOf('no-room')!==-1||(e&&e.error&&e.error.message&&e.error.message.type==='no-room')){
+      console.log('Vapi: room closed (normal call end or mic timeout)');
+      return; // Don't show an alert -- call-end handler already resets the button
+    }
     alert('Voice call error: '+msg+'\n\nPlease make sure your browser allows microphone access for this site, then try again.');
   });
 }
@@ -770,6 +778,13 @@ async function startInboundDemo(){
 
   // SDK already loaded and instance exists: just start a new call
   if(vapiInstance){
+    setInboundLabel('Requesting microphone...');
+    try{await navigator.mediaDevices.getUserMedia({audio:true})}catch(micErr){
+      console.error('Mic permission denied:',micErr);
+      setInboundLabel(inboundBtnDefaultHTML);
+      alert('Microphone access is required for the voice demo. Please allow microphone access and try again.');
+      return;
+    }
     setInboundLabel('Connecting to Priya...');
     try{await vapiInstance.start(VAPI_ASSISTANT_ID)}
     catch(err){
@@ -804,6 +819,16 @@ async function startInboundDemo(){
     // Create instance -- just sets up the SDK, does NOT auto-start any call
     vapiInstance=new VapiSDKClass(VAPI_PUBLIC_KEY);
     wireVapiEvents(vapiInstance);
+    // Pre-request microphone BEFORE starting the call to prevent room-deleted timeout
+    setInboundLabel('Requesting microphone...');
+    try{await navigator.mediaDevices.getUserMedia({audio:true})}catch(micErr){
+      console.error('Mic permission denied:',micErr);
+      vapiInstance=null;
+      setInboundLabel(inboundBtnDefaultHTML);
+      alert('Microphone access is required for the voice demo. Please allow microphone access and try again.');
+      vapiLoading=false;
+      return;
+    }
     setInboundLabel('Connecting to Priya...');
     // Single explicit start -- no double-start possible
     await vapiInstance.start(VAPI_ASSISTANT_ID);
