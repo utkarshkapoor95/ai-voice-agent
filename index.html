@@ -788,7 +788,18 @@ async function startInboundDemo(){
     // Load the Vapi Web SDK via CDN (no floating widget, pure programmatic control)
     if(!VapiSDKClass){
       var mod=await import('https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm');
-      VapiSDKClass=mod.default||mod.Vapi||mod;
+      // jsdelivr ESM bundles can nest: mod.default may be the namespace, mod.default.default the class
+      var candidate=mod.default||mod;
+      if(typeof candidate!=='function'&&candidate.default){candidate=candidate.default}
+      if(typeof candidate!=='function'&&candidate.Vapi){candidate=candidate.Vapi}
+      if(typeof candidate!=='function'){
+        // Last resort: scan all exports for the first constructor function
+        for(var k of Object.keys(mod)){if(typeof mod[k]==='function'){candidate=mod[k];break}}
+      }
+      if(typeof candidate!=='function'){
+        throw new Error('Vapi SDK loaded but no constructor found. Module keys: '+Object.keys(mod).join(', '));
+      }
+      VapiSDKClass=candidate;
     }
     // Create instance -- just sets up the SDK, does NOT auto-start any call
     vapiInstance=new VapiSDKClass(VAPI_PUBLIC_KEY);
