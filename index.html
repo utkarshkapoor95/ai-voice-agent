@@ -763,9 +763,15 @@ function wireVapiEvents(v){
       else if(e&&typeof e.statusCode==='number'){msg='Server error ('+e.statusCode+')'}
       else{msg=JSON.stringify(e)||'Unknown error'}
     }catch(ex){msg='Error (could not parse details)'}
-    // "room was deleted" / "no-room" is Daily.js signaling normal call end -- not a user-facing error
-    if(msg.toLowerCase().indexOf('room was deleted')!==-1||msg.toLowerCase().indexOf('no-room')!==-1||(e&&e.error&&e.error.message&&e.error.message.type==='no-room')){
-      console.log('Vapi: room closed (normal call end or mic timeout)');
+    // Suppress ALL normal call-end signals from Vapi/Daily.js:
+    // 1. "room was deleted" / "no-room" = Daily.js room cleanup
+    // 2. "Meeting has ended" / type "ejected" = Vapi system/assistant ended call (documented normal behavior)
+    var ml=msg.toLowerCase();
+    if(ml.indexOf('room was deleted')!==-1||ml.indexOf('no-room')!==-1||ml.indexOf('meeting has ended')!==-1
+      ||(e&&e.error&&e.error.type==='ejected')
+      ||(e&&e.error&&e.error.message&&e.error.message.type==='no-room')
+      ||(e&&e.errorMsg==='Meeting has ended')){
+      console.log('Vapi: call ended normally (suppressed):',msg);
       return; // Don't show an alert -- call-end handler already resets the button
     }
     alert('Voice call error: '+msg+'\n\nPlease make sure your browser allows microphone access for this site, then try again.');
