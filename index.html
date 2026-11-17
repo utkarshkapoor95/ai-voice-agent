@@ -720,13 +720,16 @@ document.querySelectorAll('.demo-card').forEach(card=>{
   card.addEventListener('mouseleave',()=>{card.style.transform=''});
 });
 
-// ===== INBOUND DEMO (Vapi) =====
-// Uses Vapi's official HTML script tag SDK (window.vapiSDK), loaded lazily on first click.
+// ===== INBOUND DEMO (Vapi Web SDK) =====
+// Uses @vapi-ai/web SDK loaded via CDN dynamic import -- pure programmatic control, no floating widget.
+// Previous code used the HTML Script Tag SDK (vapiSDK.run) which creates a floating button widget
+// and auto-starts when 'assistant' is passed, then .start() was called again = double-start bug.
 const VAPI_PUBLIC_KEY='ae4504c8-112b-41d8-85b3-efc7dfc5114a';
 const VAPI_ASSISTANT_ID='50ec2d63-2c6c-426a-81e6-c92eaafc7cda';
 let vapiInstance=null;
 let vapiActive=false;
 let vapiLoading=false;
+let VapiSDKClass=null;
 const inboundBtnDefaultHTML=document.getElementById('inboundBtn').innerHTML;
 
 function setInboundLabel(html){
@@ -745,25 +748,34 @@ function wireVapiEvents(v){
   });
   v.on('error',function(e){
     vapiActive=false;
-    console.error('Vapi error:',e);
+    console.error('Vapi error (raw):',e);
     setInboundLabel(inboundBtnDefaultHTML);
-    var msg=(e&&typeof e==='string')?e:(e&&e.error&&typeof e.error==='string')?e.error:(e&&e.error&&e.error.message)?e.error.message:(e&&e.message)?e.message:JSON.stringify(e);
-    alert('Voice call error: '+msg+'\n\nIf you see this on laptop but Priya works on your phone, an ad blocker or browser extension is likely blocking the connection. Try incognito mode (Ctrl+Shift+N).');
+    // Robust error message extraction -- handles string, nested .error, .message, and object types
+    var msg='Unknown error';
+    try{
+      if(e&&typeof e==='string'){msg=e}
+      else if(e&&e.error&&typeof e.error==='string'){msg=e.error}
+      else if(e&&e.error&&e.error.message&&typeof e.error.message==='string'){msg=e.error.message}
+      else if(e&&e.message&&typeof e.message==='string'){msg=e.message}
+      else if(e&&typeof e.statusCode==='number'){msg='Server error ('+e.statusCode+')'}
+      else{msg=JSON.stringify(e)||'Unknown error'}
+    }catch(ex){msg='Error (could not parse details)'}
+    alert('Voice call error: '+msg+'\n\nPlease make sure your browser allows microphone access for this site, then try again.');
   });
 }
 
-function startInboundDemo(){
+async function startInboundDemo(){
   // Toggle off if a call is live
   if(vapiActive&&vapiInstance){vapiInstance.stop();return}
 
-  // SDK already loaded: just start the call
+  // SDK already loaded and instance exists: just start a new call
   if(vapiInstance){
     setInboundLabel('Connecting to Priya...');
-    try{vapiInstance.start(VAPI_ASSISTANT_ID)}
+    try{await vapiInstance.start(VAPI_ASSISTANT_ID)}
     catch(err){
       console.error('Vapi start error:',err);
       setInboundLabel(inboundBtnDefaultHTML);
-      alert('Could not start the voice call: '+(err.message||JSON.stringify(err))+'\n\nTry incognito mode (Ctrl+Shift+N) to rule out ad blocker interference.');
+      alert('Could not start the voice call: '+(err&&err.message?err.message:JSON.stringify(err)));
     }
     return;
   }
@@ -772,40 +784,26 @@ function startInboundDemo(){
   vapiLoading=true;
   setInboundLabel('Loading voice engine...');
 
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
-  s.defer=true;s.async=true;
-  s.onload=function(){
-    vapiLoading=false;
-    try{
-      vapiInstance=window.vapiSDK.run({
-        apiKey:VAPI_PUBLIC_KEY,
-        assistant:VAPI_ASSISTANT_ID,
-        config:{
-          position:'bottom-right',
-          offset:'24px',
-          width:'56px',
-          height:'56px',
-          idle:{color:'rgb(59,130,246)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/mic.svg'},
-          loading:{color:'rgb(168,85,247)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg'},
-          active:{color:'rgb(239,68,68)',type:'round',icon:'https://unpkg.com/lucide-static@0.321.0/icons/phone-off.svg'}
-        }
-      });
-      wireVapiEvents(vapiInstance);
-      setInboundLabel('Connecting to Priya...');
-      vapiInstance.start(VAPI_ASSISTANT_ID);
-    }catch(err){
-      console.error('Vapi init failed:',err);
-      setInboundLabel(inboundBtnDefaultHTML);
-      alert('Could not start the voice demo: '+err.message+'. You can also use the floating mic button at the bottom-right of the page.');
+  try{
+    // Load the Vapi Web SDK via CDN (no floating widget, pure programmatic control)
+    if(!VapiSDKClass){
+      var mod=await import('https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm');
+      VapiSDKClass=mod.default||mod.Vapi||mod;
     }
-  };
-  s.onerror=function(){
-    vapiLoading=false;
+    // Create instance -- just sets up the SDK, does NOT auto-start any call
+    vapiInstance=new VapiSDKClass(VAPI_PUBLIC_KEY);
+    wireVapiEvents(vapiInstance);
+    setInboundLabel('Connecting to Priya...');
+    // Single explicit start -- no double-start possible
+    await vapiInstance.start(VAPI_ASSISTANT_ID);
+  }catch(err){
+    console.error('Vapi init/start failed:',err);
+    vapiInstance=null;
     setInboundLabel(inboundBtnDefaultHTML);
-    alert('Could not load the Vapi voice SDK. Check your network connection or ad blocker, then try again.');
-  };
-  document.head.appendChild(s);
+    alert('Could not start the voice demo: '+(err&&err.message?err.message:JSON.stringify(err))+'\n\nPlease allow microphone access and try again.');
+  }finally{
+    vapiLoading=false;
+  }
 }
 
 // ===== OUTBOUND DEMO (Bolna via n8n) =====
@@ -835,9 +833,9 @@ function submitOutboundDemo(){
     let data={};
     try{data=await res.json()}catch(e){}
     if(res.ok){
-      btn.textContent='Demo triggered! Call incoming...';
+      btn.textContent='Request sent! Awaiting approval...';
       btn.style.background='linear-gradient(135deg,#059669,#047857)';
-      setTimeout(closeOutboundModal,3000);
+      setTimeout(closeOutboundModal,4000);
     }else{
       btn.textContent=data.message||'Demo limit reached. Try again later.';
       btn.style.background='linear-gradient(135deg,#d97706,#b45309)';
