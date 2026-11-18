@@ -14,7 +14,7 @@ A portfolio project demonstrating **two distinct voice AI capabilities** in a si
 | **Agent Name** | Priya (SkinGlow Clinic) | Maya (AutoScale Solutions) |
 | **Channel** | Browser-based voice chat | Outbound phone calls |
 | **Use Case** | Answer questions, collect appointment details | Qualify leads, book discovery calls |
-| **Trigger** | Visitor clicks mic on website | n8n workflow triggers campaign |
+| **Trigger** | Visitor clicks mic on website | Web form triggers n8n workflow |
 | **Cost Model** | ~$0.05/min (Vapi platform + STT/LLM/TTS) | ~$0.06/min (Bolna bundled rate) |
 
 ---
@@ -35,66 +35,47 @@ flowchart TB
     end
 
     subgraph OUTBOUND["📞 OUTBOUND - Lead Qualification"]
-        O1[Google Sheets<br/>Lead List] -->|Webhook trigger| O2[n8n Workflow]
-        O2 -->|Telegram approval gate| O3{Approved?}
-        O3 -->|No| O4[Skip - Not Authorized]
-        O3 -->|Yes| O5[Bolna.ai API]
+        O1[Web Form] -->|Webhook trigger| O2[n8n Workflow]
+        O2 --> O5[Bolna.ai API]
         O5 -->|Outbound phone call| O6["Agent: Maya<br/>AutoScale Solutions"]
         O6 -->|Call complete| O7[Bolna Get Status]
         O7 --> O8{Picked Up?}
         O8 -->|Yes| O9[Groq LLM<br/>Classify Intent]
-        O8 -->|No| O10{2nd Attempt?}
+        O8 -->|No| O10[Mark No Answer]
         O9 --> O11{Interested?}
-        O11 -->|Yes| O12["✅ Interested<br/>Email + Sheet + Telegram"]
-        O11 -->|No| O13["❌ Not Interested<br/>Email + Sheet"]
-        O10 -->|No| O14["📞 No Answer<br/>Email + Sheet + Retry"]
-        O10 -->|Yes| O15["💀 Dead Contact<br/>Email + Sheet + Stop"]
+        O11 -->|Yes| O12["Interested<br/>Sheet + Telegram Alert"]
+        O11 -->|No| O13["Not Interested<br/>Sheet Log"]
     end
 
     subgraph SHARED["🔧 SHARED INFRASTRUCTURE"]
         S1[n8n on DigitalOcean]
-        S2[Telegram Bot - Approval Gate]
+        S2[Telegram Bot - Owner Alerts]
         S3[Google Sheets - Tracking]
-        S4[Brevo - Transactional Email]
         S5[Groq - Intent Classification]
     end
 
     V5 -.-> S1
     O2 -.-> S1
-    O3 -.-> S2
+    O12 -.-> S2
     V6 -.-> S3
     O12 -.-> S3
-    O12 -.-> S4
-    O13 -.-> S4
-    O14 -.-> S4
-    O15 -.-> S4
+    O13 -.-> S3
     O9 -.-> S5
 ```
 
-### Outbound Campaign - Detailed Node Flow
+### Outbound Demo - Node Flow
 
 ```mermaid
 flowchart LR
-    A[Schedule Trigger<br/>or Webhook] --> B[Get Leads<br/>from Sheet]
-    B --> C[Loop Over<br/>Each Lead]
-    C --> D{Skip if<br/>Called Recently?}
-    D -->|Skip| C
-    D -->|Proceed| E[Clean Phone<br/>E.164 Format]
-    E --> F[Bolna API<br/>Place Call]
-    F --> G[Wait 120s]
-    G --> H[Bolna API<br/>Get Status]
-    H --> I{Transcript<br/>Exists?}
-    I -->|Yes: Picked Up| J[Groq LLM<br/>Analyze Intent]
-    J --> K{Interested?}
-    K -->|Yes| L[Brevo: Opportunity Email<br/>Sheet: Mark Interested<br/>Telegram: Alert Owner]
-    K -->|No| M[Brevo: Reassurance Email<br/>Sheet: Mark Not Interested]
-    I -->|No: Not Picked Up| N{Attempt<br/>Count >= 1?}
-    N -->|No: 1st Fail| O[Brevo: No Answer Email<br/>Sheet: Mark No Answer<br/>Retry in 3 Days]
-    N -->|Yes: 2nd Fail| P[Brevo: Dead Contact Email<br/>Sheet: Mark Dead<br/>No More Retries]
-    L --> C
-    M --> C
-    O --> C
-    P --> C
+    A[Webhook<br/>Form Submit] --> B[Bolna API<br/>Place Call]
+    B --> C[Wait 120s]
+    C --> D[Bolna API<br/>Get Status]
+    D --> E{Transcript<br/>Exists?}
+    E -->|Yes: Picked Up| F[Groq LLM<br/>Classify Intent]
+    F --> G[Google Sheets<br/>Log Result]
+    G --> H[Telegram<br/>Alert Owner]
+    E -->|No: Not Picked Up| I[Google Sheets<br/>Log No Answer]
+    I --> H
 ```
 
 ---
@@ -106,10 +87,9 @@ flowchart LR
 | Inbound Voice AI | [Vapi.ai](https://vapi.ai) | Browser-based voice widget, WebRTC |
 | Outbound Voice AI | [Bolna.ai](https://bolna.ai) | Telephony API, outbound phone calls |
 | Workflow Engine | [n8n](https://n8n.io) (self-hosted) | Orchestration, branching logic, API calls |
-| LLM (Classification) | [Groq](https://groq.com) (LLama 3.3 70B) | Post-call transcript intent classification |
-| Email | [Brevo](https://brevo.com) | Transactional follow-up emails (4 templates) |
-| Data Store | Google Sheets | Lead tracking, call status, attempt counts |
-| Notifications | Telegram Bot API | Owner alerts + demo approval gate |
+| LLM (Classification) | [Groq](https://groq.com) (openai/gpt-oss-120b) | Post-call transcript intent classification |
+| Data Store | Google Sheets | Lead tracking, call status, classification |
+| Notifications | Telegram Bot API | Owner alerts (post-call summaries) |
 | Hosting | DigitalOcean | n8n droplet |
 | Showcase Page | GitHub Pages | Static landing page |
 
@@ -126,9 +106,7 @@ ai-voice-agent/
 │   └── outbound_qualifier.md               # Bolna agent: Maya (AutoScale Solutions)
 ├── workflows/
 │   ├── outbound_campaign_SANITIZED.json    # Production n8n workflow (credentials stripped)
-│   ├── outbound_demo.json                  # Demo workflow skeleton (single-lead mode)
-│   ├── inbound_webhook.json                # Inbound call data handler
-│   └── telegram_gate.json                  # Telegram approval mechanism
+│   └── outbound_demo.json                  # Demo workflow (single-lead mode)
 └── docs/
     └── assets/                             # Screenshots, diagrams
 ```
@@ -148,28 +126,15 @@ ai-voice-agent/
 
 ### Outbound Flow (Bolna - Phone Calls)
 
-1. A lead list sits in Google Sheets with names, phone numbers, and status
-2. The n8n workflow is triggered (manually or via schedule)
-3. **Telegram Gate:** A message is sent to the owner's Telegram asking for approval before any call is placed
-4. On approval, the workflow loops through each lead:
-   - Skips leads already called recently (3-day cooldown for No Answer)
-   - Cleans the phone number to E.164 international format
-   - Places an outbound call via Bolna's API
-   - Waits 120 seconds for the call to complete
-   - Polls Bolna for the call transcript and status
-5. **If picked up:** Transcript is sent to Groq (LLama 3.3 70B) for intent classification
-   - **Interested** -> Opportunity email + Google Sheets update + Telegram alert
-   - **Not Interested** -> Reassurance email + Google Sheets update
-6. **If not picked up:**
-   - **1st failure** -> "We tried calling" email + mark for retry in 3 days
-   - **2nd failure** -> "Door is open" final email + mark as Dead Contact
-
-### Security: Telegram Approval Gate
-
-Both demos are gated behind a Telegram approval mechanism. When triggered:
-1. n8n sends a message to the owner's Telegram with call details
-2. Owner replies "yes" to approve or "no" to block
-3. Only approved calls proceed, preventing unauthorized credit burn
+1. User submits the demo form with their name, phone number, and scenario selection
+2. n8n webhook receives the form data and triggers the workflow
+3. Bolna API places a live outbound call to the submitted phone number
+4. The AI agent conducts the conversation based on the selected scenario
+5. After the call completes, n8n polls Bolna for the transcript and status
+6. **If picked up:** Transcript is sent to Groq (openai/gpt-oss-120b) for intent classification
+   - Result and transcript are logged to Google Sheets
+   - Telegram sends the owner a post-call summary with classification
+7. **If not picked up:** Logged as "No Answer" in Google Sheets
 
 ---
 
@@ -179,8 +144,8 @@ The outbound workflow architecture is based on a **production system** that made
 
 For this portfolio showcase, the system has been adapted with:
 - Google Sheets replacing Airtable (simpler setup, no paid plan needed)
-- Telegram approval gate added (demo security)
 - Both Vapi inbound and Bolna outbound unified in one project
+- Telegram for post-call owner notifications
 - All credentials stripped and replaced with placeholders
 
 ---
@@ -192,8 +157,7 @@ For this portfolio showcase, the system has been adapted with:
 - [Bolna.ai](https://bolna.ai) account (free tier: $5 credits)
 - [n8n](https://n8n.io) instance (self-hosted or cloud)
 - [Groq](https://groq.com) API key (free tier available)
-- [Brevo](https://brevo.com) account (free tier: 300 emails/day)
-- Telegram Bot (via [@BotFather](https://t.me/BotFather))
+- Telegram Bot (via [@BotFather](https://t.me/BotFather)) for owner alerts
 - Google Sheets API credentials
 
 ### Quick Start
@@ -218,7 +182,7 @@ For this portfolio showcase, the system has been adapted with:
 4. **Import n8n Workflows:**
    - Import `workflows/outbound_demo.json` into your n8n instance
    - Replace all `YOUR_*` placeholders with your actual credentials
-   - Set up the Telegram gate with your bot token and chat ID
+   - Set up the Telegram bot with your bot token and chat ID for notifications
 
 5. **Deploy Showcase Page:**
    - Push to GitHub
@@ -234,7 +198,6 @@ For this portfolio showcase, the system has been adapted with:
 | Vapi.ai | $10 credits | ~$0.05/min (platform + Deepgram STT + GPT-4o + ElevenLabs TTS) |
 | Bolna.ai | $5 credits | ~$0.06/min (bundled: platform + STT + LLM + TTS + telephony) |
 | Groq | Free tier | Free (for classification - minimal tokens) |
-| Brevo | 300 emails/day | Free |
 | n8n | Self-hosted | $0 (runs on existing DigitalOcean droplet) |
 
 **Estimated demo cost:** ~$0.30-0.50 per complete demo cycle (1 inbound + 1 outbound call)
